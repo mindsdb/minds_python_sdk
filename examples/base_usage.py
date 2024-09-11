@@ -31,7 +31,7 @@ postgres_config = DatabaseConfig(
 mind = client.minds.create(name='mind_name', datasources=[postgres_config] )
 
 # or separately
-datasource = client.datasources.add_datasource(postgres_config)
+datasource = client.datasources.create(postgres_config)
 mind2 = client.minds.create(name='mind_name', datasources=[datasource] )
 
 # or add to existed mind
@@ -44,8 +44,14 @@ mind2.add_datasource(datasource)
 
 # --- managing minds ---
 
-# create or update
+# create or replace
 mind = client.minds.create(name='mind_name', replace=True, datasources=[postgres_config] )
+
+# update
+mind.update(
+	name='mind_name', # is required
+	datasources=[postgres_config]  # it will replace current datasource list
+)
 
 # list
 print(client.minds.list())
@@ -67,7 +73,7 @@ client.minds.drop('mind_name')
 print(client.datasources.list())
 
 # get
-datasource = client.minds.get('my_datasource')
+datasource = client.datasources.get('my_datasource')
 
 # remove
 client.datasources.drop('my_datasource')
