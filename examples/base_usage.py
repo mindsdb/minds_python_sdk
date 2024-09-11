@@ -44,6 +44,9 @@ mind2.add_datasource(datasource)
 
 # --- managing minds ---
 
+# create or update
+mind = client.minds.create(name='mind_name', replace=True, datasources=[postgres_config] )
+
 # list
 print(client.minds.list())
 
