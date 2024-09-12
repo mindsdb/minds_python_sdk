@@ -9,13 +9,13 @@ client = Client("YOUR_API_KEY", base_url)
 
 
 # create datasource
-from client.datasources import DatabaseConfig
+from minds.datasources import DatabaseConfig
 
 postgres_config = DatabaseConfig(
     name='my_datasource',
 	description='<DESCRIPTION-OF-YOUR-DATA>',
-	type='postgres',
-	connection_args={
+	engine='postgres',
+	connection_data={
     	'user': 'demo_user',
     	'password': 'demo_password',
     	'host': 'samples.mindsdb.com',
@@ -61,6 +61,7 @@ mind = client.minds.get('mind_name')
 
 # removing datasource
 # ? should it drop datasource if it is not connected to any mind anymore?
+# TODO is not implemented on gateway
 mind.del_datasource(datasource)
 
 # remove mind
