@@ -26,6 +26,9 @@ postgres_config = DatabaseConfig(
 	tables=['<TABLE-1>', '<TABLE-2>']
 )
 
+# using sample config
+from minds.datasources.examples import example_ds
+
 # create mind
 # with datasource at the same time
 mind = client.minds.create(name='mind_name', datasources=[postgres_config] )

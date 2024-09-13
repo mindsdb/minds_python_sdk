@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from minds.datasources import Datasource
+from minds.datasources import Datasource, DatabaseConfig
 
 
 class Mind:
@@ -60,10 +60,12 @@ class Mind:
             f'/projects/{self.project}/minds/{self.name}/datasources',
             data=datasource.model_dump()
         )
-        self.datasources.append(datasource)
+        updated = self.client.minds.get(self.name)
+
+        self.datasources = updated.datasources
 
     def del_datasource(self, datasource: Union[Datasource, str]):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class Minds:
@@ -98,10 +100,22 @@ class Minds:
                 self.drop(name)
             except Exception:
                 ...
+
+        ds_names = []
         if datasources:
-            datasources = [ds.model_dump() for ds in datasources]
-        else:
-            datasources = []
+            for ds in datasources:
+                if isinstance(ds, Datasource):
+                    ds = ds.name
+                elif isinstance(ds, DatabaseConfig):
+                    # try to create
+                    try:
+                        self.client.datasources.create(ds)
+                    except Exception:
+                        ...
+                    ds = ds.name
+                elif not isinstance(ds, str):
+                    raise ValueError(f'Unknown type of datasource: {ds}')
+                ds_names.append(ds)
 
         self.api.post(
             f'/projects/{self.project}/minds',
@@ -110,7 +124,7 @@ class Minds:
                 'model_name': model_name,
                 'provider': provider,
                 'parameters': parameters,
-                'datasources': datasources,
+                'datasources': ds_names,
             }
         )
         mind = self.get(name)
@@ -119,7 +133,8 @@ class Minds:
 
     def drop(self, name: str):
         mind = self.get(name)
-        for ds in mind.datasources:
-            mind.del_datasource(ds)
+        # TODO not implemented yet
+        # for ds in mind.datasources:
+        #     mind.del_datasource(ds)
 
         self.api.delete(f'/projects/{self.project}/minds/{name}')
