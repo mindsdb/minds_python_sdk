@@ -132,9 +132,4 @@ class Minds:
         return mind
 
     def drop(self, name: str):
-        mind = self.get(name)
-        # TODO not implemented yet
-        # for ds in mind.datasources:
-        #     mind.del_datasource(ds)
-
-        self.api.delete(f'/projects/{self.project}/minds/{name}')
+       self.api.delete(f'/projects/{self.project}/minds/{name}')
