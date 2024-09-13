@@ -1,4 +1,4 @@
-__title__ = 'Minds SDK'
+__title__ = 'minds_sdk'
 __package_name__ = 'minds'
 __version__ = '0.1.0'
 __description__ = 'An AI-Data Mind is an LLM with the built-in power to answer data questions for Agents'
