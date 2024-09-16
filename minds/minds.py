@@ -25,14 +25,7 @@ class Mind:
         self.created_at = created_at
         self.updated_at = updated_at
 
-        self.datasources = []
-        for name in datasources:
-            try:
-                ds = self.client.datasources.get(name)
-            except RuntimeError:
-                # TODO skipped, it could be not sql skill
-                continue
-            self.datasources.append(ds)
+        self.datasources = datasources
 
     def update(
         self,
@@ -42,18 +35,37 @@ class Mind:
         parameters=None,
         datasources=None
     ):
-        if datasources:
-            datasources = [ds.model_dump() for ds in datasources]
+        data = {}
+
+        if datasources is not None:
+            ds_names = []
+            for ds in datasources:
+                if isinstance(ds, Datasource):
+                    ds = ds.name
+                elif isinstance(ds, DatabaseConfig):
+                    # try to create
+                    try:
+                        self.client.datasources.create(ds)
+                    except Exception:
+                        ...
+                    ds = ds.name
+                elif not isinstance(ds, str):
+                    raise ValueError(f'Unknown type of datasource: {ds}')
+                ds_names.append(ds)
+            data['datasources'] = ds_names
+
+        if name is not None:
+            data['name'] = name
+        if model_name is not None:
+            data['model_name'] = model_name
+        if provider is not None:
+            data['provider'] = provider
+        if parameters is not None:
+            data['parameters'] = parameters
 
         self.api.patch(
-            f'/projects/{self.project}/minds',
-            data={
-                'name': name,
-                'model_name': model_name,
-                'provider': provider,
-                'parameters': parameters,
-                'datasources': datasources,
-            }
+            f'/projects/{self.project}/minds/{self.name}',
+            data=data
         )
         if name is not None and name != self.name:
             self.name = name
