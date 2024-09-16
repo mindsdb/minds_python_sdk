@@ -36,7 +36,8 @@ class Mind:
 
     def update(
         self,
-        model_name=None,
+        name: str = None,
+        model_name: str = None,
         provider=None,
         parameters=None,
         datasources=None
@@ -47,13 +48,15 @@ class Mind:
         self.api.patch(
             f'/projects/{self.project}/minds',
             data={
-                'name': self.name,
+                'name': name,
                 'model_name': model_name,
                 'provider': provider,
                 'parameters': parameters,
                 'datasources': datasources,
             }
         )
+        if name is not None and name != self.name:
+            self.name = name
 
     def add_datasource(self, datasource: Datasource):
         self.api.post(
