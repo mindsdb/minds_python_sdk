@@ -2,6 +2,8 @@ from typing import List, Union
 
 from minds.datasources import Datasource, DatabaseConfig
 
+DEFAULT_PROMPT_TEMPLATE = 'Use your database tools to answer the user\'s question: {{question}}'
+
 
 class Mind:
     def __init__(
@@ -131,6 +133,11 @@ class Minds:
                 elif not isinstance(ds, str):
                     raise ValueError(f'Unknown type of datasource: {ds}')
                 ds_names.append(ds)
+
+        if parameters is None:
+            parameters = {}
+        if 'prompt_template' not in parameters:
+            parameters['prompt_template'] = DEFAULT_PROMPT_TEMPLATE
 
         self.api.post(
             f'/projects/{self.project}/minds',
