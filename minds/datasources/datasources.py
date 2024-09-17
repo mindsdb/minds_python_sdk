@@ -20,8 +20,15 @@ class Datasources:
     def __init__(self, client):
         self.api = client.api
 
-    def create(self, ds_config: DatabaseConfig):
+    def create(self, ds_config: DatabaseConfig, replace=False):
         name = ds_config.name
+
+        if replace:
+            try:
+                self.drop(name)
+            except Exception:
+                ...
+
         self.api.post('/datasources', data=ds_config.model_dump())
         return self.get(name)
 

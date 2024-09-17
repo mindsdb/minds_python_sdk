@@ -73,6 +73,10 @@ client.minds.drop('mind_name')
 
 # --- managing datasources ---
 
+# create or replace
+datasource = client.datasources.create(postgres_config, replace=True)
+
+
 # list
 print(client.datasources.list())
 
