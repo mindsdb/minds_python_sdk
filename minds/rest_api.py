@@ -2,8 +2,8 @@ import requests
 
 
 def _raise_for_status(response):
-    # show response text in error
-    if 400 <= response.status_code < 600:
+    # show response text in error, ignore 409 for conflicts
+    if 400 <= response.status_code < 600 and response.status_code != 409::
         raise requests.HTTPError(f'{response.reason}: {response.text}', response=response)
 
 
