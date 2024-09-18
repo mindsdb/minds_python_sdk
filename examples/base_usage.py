@@ -70,6 +70,8 @@ mind.del_datasource(datasource)
 # remove mind
 client.minds.drop('mind_name')
 
+# call completion
+print(mind.completion('2+3'))
 
 # --- managing datasources ---
 

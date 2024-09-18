@@ -1,4 +1,7 @@
 from typing import List, Union
+from urllib.parse import urlparse, urlunparse
+
+from openai import OpenAI
 
 from minds.datasources import Datasource, DatabaseConfig
 
@@ -83,6 +86,32 @@ class Mind:
 
     def del_datasource(self, datasource: Union[Datasource, str]):
         raise NotImplementedError
+
+    def completion(self, message):
+        parsed = urlparse(self.api.base_url)
+
+        netloc = parsed.netloc
+        if netloc == 'mdb.ai':
+            llm_host = 'llm.mdb.ai'
+        else:
+            llm_host = 'ai.' + netloc
+
+        parsed = parsed._replace(path='', netloc=llm_host)
+
+        base_url = urlunparse(parsed)
+        openai_client = OpenAI(
+            api_key=self.api.api_key,
+            base_url=base_url
+        )
+
+        completion = openai_client.chat.completions.create(
+            model=self.name,
+            messages=[
+                {'role': 'user', 'content': message}
+            ],
+            stream=False
+        )
+        return completion.choices[0].message.content
 
 
 class Minds:
