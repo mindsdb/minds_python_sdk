@@ -1,10 +1,14 @@
 import requests
 
+import minds.exceptions as exc
+
 
 def _raise_for_status(response):
-    # show response text in error
+    if response.status_code == 404:
+        raise exc.ObjectNotFound(response.text)
+
     if 400 <= response.status_code < 600:
-        raise requests.HTTPError(f'{response.reason}: {response.text}', response=response)
+        raise exc.UnknownError(f'{response.reason}: {response.text}')
 
 
 class RestAPI:

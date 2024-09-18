@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
+import minds.exceptions as exc
 
 class DatabaseConfig(BaseModel):
 
@@ -15,7 +16,6 @@ class DatabaseConfig(BaseModel):
 class Datasource(DatabaseConfig):
     ...
 
-
 class Datasources:
     def __init__(self, client):
         self.api = client.api
@@ -25,8 +25,9 @@ class Datasources:
 
         if replace:
             try:
+                self.get(name)
                 self.drop(name)
-            except Exception:
+            except exc.ObjectNotFound:
                 ...
 
         self.api.post('/datasources', data=ds_config.model_dump())
@@ -44,9 +45,10 @@ class Datasources:
 
     def get(self, name: str) -> Datasource:
         data = self.api.get(f'/datasources/{name}').json()
+
         # TODO skip not sql skills
         if data.get('engine') is None:
-            raise RuntimeError(f'Datasource {name} is not found')
+            raise exc.ObjectNotSupported(f'Wrong type of datasource: {name}')
         return Datasource(**data)
 
     def drop(self, name: str):
