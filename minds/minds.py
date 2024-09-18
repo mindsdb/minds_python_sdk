@@ -3,6 +3,8 @@ from urllib.parse import urlparse, urlunparse
 
 from openai import OpenAI
 
+import minds.exceptions as exc
+
 from minds.datasources import Datasource, DatabaseConfig
 
 DEFAULT_PROMPT_TEMPLATE = 'Use your database tools to answer the user\'s question: {{question}}'
@@ -48,11 +50,12 @@ class Mind:
                 if isinstance(ds, Datasource):
                     ds = ds.name
                 elif isinstance(ds, DatabaseConfig):
-                    # try to create
+                    # if not exists - create
                     try:
+                        self.client.datasources.get(ds.name)
+                    except exc.ObjectNotFound:
                         self.client.datasources.create(ds)
-                    except Exception:
-                        ...
+
                     ds = ds.name
                 elif not isinstance(ds, str):
                     raise ValueError(f'Unknown type of datasource: {ds}')
@@ -143,8 +146,9 @@ class Minds:
 
         if replace:
             try:
+                self.get(name)
                 self.drop(name)
-            except Exception:
+            except exc.ObjectNotFound:
                 ...
 
         ds_names = []
@@ -153,11 +157,12 @@ class Minds:
                 if isinstance(ds, Datasource):
                     ds = ds.name
                 elif isinstance(ds, DatabaseConfig):
-                    # try to create
+                    # if not exists - create
                     try:
+                        self.client.datasources.get(ds.name)
+                    except exc.ObjectNotFound:
                         self.client.datasources.create(ds)
-                    except Exception:
-                        ...
+
                     ds = ds.name
                 elif not isinstance(ds, str):
                     raise ValueError(f'Unknown type of datasource: {ds}')
