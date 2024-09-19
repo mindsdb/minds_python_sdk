@@ -47,18 +47,7 @@ class Mind:
         if datasources is not None:
             ds_names = []
             for ds in datasources:
-                if isinstance(ds, Datasource):
-                    ds = ds.name
-                elif isinstance(ds, DatabaseConfig):
-                    # if not exists - create
-                    try:
-                        self.client.datasources.get(ds.name)
-                    except exc.ObjectNotFound:
-                        self.client.datasources.create(ds)
-
-                    ds = ds.name
-                elif not isinstance(ds, str):
-                    raise ValueError(f'Unknown type of datasource: {ds}')
+                ds = self.client.minds._check_datasource(ds)
                 ds_names.append(ds)
             data['datasources'] = ds_names
 
@@ -79,9 +68,14 @@ class Mind:
             self.name = name
 
     def add_datasource(self, datasource: Datasource):
+
+        ds_name = self.client.minds._check_datasource(datasource)
+
         self.api.post(
             f'/projects/{self.project}/minds/{self.name}/datasources',
-            data=datasource.model_dump()
+            data={
+                'name': ds_name,
+            }
         )
         updated = self.client.minds.get(self.name)
 
@@ -135,6 +129,21 @@ class Minds:
         item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
         return Mind(self.client, **item)
 
+    def _check_datasource(self, ds) -> str:
+        if isinstance(ds, Datasource):
+            ds = ds.name
+        elif isinstance(ds, DatabaseConfig):
+            # if not exists - create
+            try:
+                self.client.datasources.get(ds.name)
+            except exc.ObjectNotFound:
+                self.client.datasources.create(ds)
+
+            ds = ds.name
+        elif not isinstance(ds, str):
+            raise ValueError(f'Unknown type of datasource: {ds}')
+        return ds
+
     def create(
         self, name,
         model_name=None,
@@ -154,18 +163,8 @@ class Minds:
         ds_names = []
         if datasources:
             for ds in datasources:
-                if isinstance(ds, Datasource):
-                    ds = ds.name
-                elif isinstance(ds, DatabaseConfig):
-                    # if not exists - create
-                    try:
-                        self.client.datasources.get(ds.name)
-                    except exc.ObjectNotFound:
-                        self.client.datasources.create(ds)
+                ds = self._check_datasource(ds)
 
-                    ds = ds.name
-                elif not isinstance(ds, str):
-                    raise ValueError(f'Unknown type of datasource: {ds}')
                 ds_names.append(ds)
 
         if parameters is None:
