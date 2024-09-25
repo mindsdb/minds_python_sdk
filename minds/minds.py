@@ -126,10 +126,13 @@ class Mind:
             stream=stream
         )
         if stream:
-            for chunk in response:
-                yield chunk.choices[0].delta
+            return self.stream_response(response)
         else:
             return response.choices[0].message.content
+
+    def stream_response(self, response):
+        for chunk in response:
+            yield chunk.choices[0].delta
 
 
 class Minds:
