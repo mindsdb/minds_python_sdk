@@ -73,6 +73,10 @@ client.minds.drop('mind_name')
 # call completion
 print(mind.completion('2+3'))
 
+# stream completion
+for chunk in mind.completion('2+3', stream=True):
+	print(chunk.content)
+
 # --- managing datasources ---
 
 # create or replace
