@@ -41,23 +41,28 @@ def test_datasources():
 
 
 def test_minds():
-    ds_name2 = 'test_ds_'
-    mind_name = 'test_mind_'
+    ds_name = 'test_datasource_'
+    ds_name2 = 'test_datasource2_'
+    mind_name = 'int_test_mind_'
+    mind_name2 = 'int_test_mind2_'
     prompt1 = 'answer in german'
     prompt2 = 'answer in spanish'
 
-    # remove previous object
-    try:
-        client.minds.drop(mind_name)
-    except ObjectNotFound:
-        ...
+    # remove previous objects
+    for name in (mind_name, mind_name2):
+        try:
+            client.minds.drop(name)
+        except ObjectNotFound:
+            ...
 
     # prepare datasources
+    ds_cfg = copy.copy(example_ds)
+    ds_cfg.name = ds_name
     ds = client.datasources.create(example_ds, replace=True)
 
     # second datasource
-    example_ds2 = copy.copy(example_ds)
-    example_ds2.name = ds_name2
+    ds2_cfg = copy.copy(example_ds)
+    ds2_cfg.name = ds_name2
 
     # create
     mind = client.minds.create(
@@ -68,7 +73,7 @@ def test_minds():
     mind = client.minds.create(
         mind_name,
         replace=True,
-        datasources=[ds.name, example_ds2],
+        datasources=[ds.name, ds2_cfg],
         parameters={
             'prompt_template': prompt1
         }
@@ -84,7 +89,6 @@ def test_minds():
     assert len(mind_list) > 0
 
     # rename & update
-    mind_name2 = 'test_mind2_'
     mind.update(
         name=mind_name2,
         datasources=[ds.name],
@@ -104,11 +108,11 @@ def test_minds():
     assert mind.parameters['prompt_template'] == prompt2
 
     # add datasource
-    mind.add_datasource(example_ds2)
+    mind.add_datasource(ds2_cfg)
     assert len(mind.datasources) == 2
 
     # del datasource
-    mind.del_datasource(example_ds2.name)
+    mind.del_datasource(ds2_cfg.name)
     assert len(mind.datasources) == 1
 
     # completion
@@ -122,6 +126,6 @@ def test_minds():
     assert success is True
 
     # drop
-    client.minds.drop(mind_name)
-    client.datasources.drop(example_ds.name)
-    client.datasources.drop(ds_name2)
+    client.minds.drop(mind_name2)
+    client.datasources.drop(ds.name)
+    client.datasources.drop(ds2_cfg.name)
