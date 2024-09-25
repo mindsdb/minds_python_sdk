@@ -82,7 +82,16 @@ class Mind:
         self.datasources = updated.datasources
 
     def del_datasource(self, datasource: Union[Datasource, str]):
-        raise NotImplementedError
+        if isinstance(datasource, Datasource):
+            datasource = datasource.name
+        elif not isinstance(datasource, str):
+            raise ValueError(f'Unknown type of datasource: {datasource}')
+        self.api.delete(
+            f'/projects/{self.project}/minds/{self.name}/datasources/{datasource}',
+        )
+        updated = self.client.minds.get(self.name)
+
+        self.datasources = updated.datasources
 
     def completion(self, message: str, stream: bool = False) -> Union[str, Iterable[object]]:
         """

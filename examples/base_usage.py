@@ -63,8 +63,6 @@ print(client.minds.list())
 mind = client.minds.get('mind_name')
 
 # removing datasource
-# ? should it drop datasource if it is not connected to any mind anymore?
-# TODO is not implemented on gateway
 mind.del_datasource(datasource)
 
 # remove mind
