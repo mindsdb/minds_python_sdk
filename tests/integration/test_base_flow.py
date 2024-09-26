@@ -1,22 +1,33 @@
 import os
 import copy
 
-api_key = os.getenv('API_KEY')
-base_url = 'https://dev.mindsdb.com'
+import pytest
 
 from minds.client import Client
-
-client = Client(api_key, base_url=base_url)
-
-import logging
-logging.basicConfig(level=logging.DEBUG)
 
 from minds.datasources.examples import example_ds
 
 from minds.exceptions import ObjectNotFound
 
 
-def test_datasources():
+@pytest.fixture(scope="module")
+def client():
+    api_key = os.getenv('API_KEY')
+    if api_key is None:
+        raise RuntimeError('Environment variable API_KEY is not set')
+
+    base_url = 'https://dev.mindsdb.com'
+    return Client(api_key, base_url=base_url)
+
+
+def test_wrong_api_key():
+    base_url = 'https://dev.mindsdb.com'
+    client = Client('api_key', base_url=base_url)
+    with pytest.raises(Exception):
+        client.datasources.get('example_db')
+
+
+def test_datasources(client):
 
     # remove previous object
     try:
@@ -40,7 +51,7 @@ def test_datasources():
     client.datasources.drop(ds.name)
 
 
-def test_minds():
+def test_minds(client):
     ds_name = 'test_datasource_'
     ds_name2 = 'test_datasource2_'
     mind_name = 'int_test_mind_'
@@ -96,12 +107,9 @@ def test_minds():
             'prompt_template': prompt2
         }
     )
-    try:
-        mind = client.minds.get(mind_name)
-    except ObjectNotFound:
-        ...
-    else:
-        raise Exception('mind is not renamed')
+    with pytest.raises(ObjectNotFound):
+        # this name not exists
+        client.minds.get(mind_name)
 
     mind = client.minds.get(mind_name2)
     assert len(mind.datasources) == 1
