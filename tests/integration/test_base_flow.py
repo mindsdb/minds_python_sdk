@@ -16,8 +16,7 @@ def client():
     if api_key is None:
         raise RuntimeError('Environment variable API_KEY is not set')
 
-    base_url = 'https://dev.mindsdb.com'
-    return Client(api_key, base_url=base_url)
+    return Client(api_key)
 
 
 def test_wrong_api_key():
