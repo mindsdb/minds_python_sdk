@@ -1,8 +1,10 @@
 name: Build and publish to PyPi
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Run Integration Tests on Release"]
+    types:
+      - completed
 
 jobs:
  #  Push a new release to PyPI
