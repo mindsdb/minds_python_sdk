@@ -1,12 +1,7 @@
 import os
 import copy
 
-api_key = os.getenv('API_KEY')
-base_url = 'https://dev.mindsdb.com'
-
 from minds.client import Client
-
-client = Client(api_key, base_url=base_url)
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -16,7 +11,15 @@ from minds.datasources.examples import example_ds
 from minds.exceptions import ObjectNotFound
 
 
+def get_client():
+    api_key = os.getenv('API_KEY')
+    base_url = os.getenv('BASE_URL', 'https://dev.mindsdb.com')
+
+    return Client(api_key, base_url=base_url)
+
+
 def test_datasources():
+    client = get_client()
 
     # remove previous object
     try:
@@ -41,6 +44,8 @@ def test_datasources():
 
 
 def test_minds():
+    client = get_client()
+
     ds_name = 'test_datasource_'
     ds_name2 = 'test_datasource2_'
     mind_name = 'int_test_mind_'
@@ -63,6 +68,7 @@ def test_minds():
     # second datasource
     ds2_cfg = copy.copy(example_ds)
     ds2_cfg.name = ds_name2
+    ds2_cfg.tables = ['home_rentals']
 
     # create
     mind = client.minds.create(
@@ -118,6 +124,23 @@ def test_minds():
     # completion
     answer = mind.completion('say hello')
     assert 'hola' in answer.lower()
+
+    # ask about data
+    answer = mind.completion('what is max rental price in home rental?')
+    assert '5602' in answer.replace(' ', '').replace(',', '')
+
+    # limit tables
+    mind.del_datasource(ds.name)
+    mind.add_datasource(ds_name2)
+    assert len(mind.datasources) == 1
+
+    answer = mind.completion('what is max rental price in home rental?')
+    assert '5602' in answer.replace(' ', '').replace(',', '')
+
+    # not accessible table
+    answer = mind.completion('what is max price in car sales?')
+    assert '145000' not in answer.replace(' ', '').replace(',', '')
+
     # stream completion
     success = False
     for chunk in mind.completion('say hello', stream=True):
