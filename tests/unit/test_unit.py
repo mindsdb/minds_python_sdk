@@ -23,6 +23,7 @@ def response_mock(mock, data):
 
 API_KEY = '1234567890abc'
 
+
 class TestDatasources:
 
     def _compare_ds(self, ds1, ds2):
@@ -91,6 +92,17 @@ class TestDatasources:
         assert args[0].endswith(f'/api/datasources')
 
 
+def set_openai_completion(mock_openai, response):
+    mock_openai.return_value = {
+        'choices': [{
+            'message': {
+                'role': 'system',
+                'content': response
+            }
+        }]
+    }
+
+
 class TestMinds:
 
     mind_json = {
@@ -155,8 +167,29 @@ class TestMinds:
 
         check_mind_created(mind, mock_post, create_params)
 
-    def test_update(self):
+    @patch('requests.get')
+    @patch('requests.patch')
+    def test_update(self, mock_patch, mock_get):
         client = Client(API_KEY)
+
+        response_mock(mock_get, self.mind_json)
+        mind = client.minds.get('mind_name')
+
+        update_params = dict(
+            name='mind_name2',
+            datasources=['ds_name'],
+            provider='ollama',
+            model_name='llama',
+            parameters={
+                'prompt_template': 'be polite'
+            }
+        )
+        mind.update(**update_params)
+
+        args, kwargs = mock_patch.call_args
+        assert args[0].endswith(f'/api/projects/mindsdb/minds/{self.mind_json["name"]}')
+
+        assert kwargs['json'] == update_params
 
     @patch('requests.get')
     def test_get(self, mock_get):
@@ -170,14 +203,42 @@ class TestMinds:
         args, _ = mock_get.call_args
         assert args[0].endswith(f'/api/projects/mindsdb/minds/my_mind')
 
-    def test_list(self):
+    @patch('requests.get')
+    def test_list(self, mock_get):
         client = Client(API_KEY)
 
-    def test_delete(self):
+        response_mock(mock_get, [self.mind_json])
+        minds_list = client.minds.list()
+        assert len(minds_list) == 1
+        self.compare_mind(minds_list[0], self.mind_json)
+
+        args, _ = mock_get.call_args
+        assert args[0].endswith(f'/api/projects/mindsdb/minds')
+
+    @patch('requests.delete')
+    def test_delete(self, mock_del):
+        client = Client(API_KEY)
+        client.minds.drop('my_name')
+
+        args, _ = mock_del.call_args
+        assert args[0].endswith(f'/api/projects/mindsdb/minds/my_name')
+
+    @patch('requests.get')
+    @patch('openai.OpenAI')
+    def test_completion(self, mock_openai, mock_get):
         client = Client(API_KEY)
 
-    def test_completion(self):
-        client = Client(API_KEY)
+        response_mock(mock_get, self.mind_json)
+        mind = client.minds.get('mind_name')
+
+        openai_response = 'how can I assist you today?'
+        set_openai_completion(mock_openai, openai_response)
+
+        answer = mind.completion('hello')
+        assert answer == openai_response
+
+
+
 
 
 
