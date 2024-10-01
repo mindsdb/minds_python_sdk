@@ -7,6 +7,14 @@ class ObjectNotSupported(Exception):
     ...
 
 
+class Forbidden(Exception):
+    ...
+
+
+class Unauthorized(Exception):
+    ...
+
+
 class UnknownError(Exception):
     ...
 

@@ -7,6 +7,12 @@ def _raise_for_status(response):
     if response.status_code == 404:
         raise exc.ObjectNotFound(response.text)
 
+    if response.status_code == 403:
+        raise exc.Forbidden(response.text)
+
+    if response.status_code == 401:
+        raise exc.Unauthorized(response.text)
+
     if 400 <= response.status_code < 600:
         raise exc.UnknownError(f'{response.reason}: {response.text}')
 

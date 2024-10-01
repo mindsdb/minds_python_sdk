@@ -1,5 +1,6 @@
 import os
 import copy
+import pytest
 
 from minds.client import Client
 
@@ -16,6 +17,13 @@ def get_client():
     base_url = os.getenv('BASE_URL', 'https://dev.mindsdb.com')
 
     return Client(api_key, base_url=base_url)
+
+
+def test_wrong_api_key():
+    base_url = 'https://dev.mindsdb.com'
+    client = Client('api_key', base_url=base_url)
+    with pytest.raises(Exception):
+        client.datasources.get('example_db')
 
 
 def test_datasources():
@@ -102,12 +110,9 @@ def test_minds():
             'prompt_template': prompt2
         }
     )
-    try:
-        mind = client.minds.get(mind_name)
-    except ObjectNotFound:
-        ...
-    else:
-        raise Exception('mind is not renamed')
+    with pytest.raises(ObjectNotFound):
+        # this name not exists
+        client.minds.get(mind_name)
 
     mind = client.minds.get(mind_name2)
     assert len(mind.datasources) == 1
