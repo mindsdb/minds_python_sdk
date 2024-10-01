@@ -126,11 +126,11 @@ class Mind:
             stream=stream
         )
         if stream:
-            return self.stream_response(response)
+            return self._stream_response(response)
         else:
             return response.choices[0].message.content
 
-    def stream_response(self, response):
+    def _stream_response(self, response):
         for chunk in response:
             yield chunk.choices[0].delta
 
@@ -143,6 +143,12 @@ class Minds:
         self.project = 'mindsdb'
 
     def list(self) -> List[Mind]:
+        """
+        Returns list of minds
+
+        :return: iterable
+        """
+
         data = self.api.get(f'/projects/{self.project}/minds').json()
         minds_list = []
         for item in data:
@@ -150,6 +156,13 @@ class Minds:
         return minds_list
 
     def get(self, name: str) -> Mind:
+        """
+        Get mind by name
+
+        :param name: name of the mind
+        :return: a mind object
+        """
+
         item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
         return Mind(self.client, **item)
 
@@ -211,4 +224,10 @@ class Minds:
         return mind
 
     def drop(self, name: str):
+       """
+       Drop mind by name
+
+       :param name: name of the mind
+       """
+
        self.api.delete(f'/projects/{self.project}/minds/{name}')
