@@ -46,6 +46,23 @@ class Mind:
         datasources=None,
         parameters=None,
     ):
+        """
+        Update mind
+
+        If parameter is set it will be applied to mind
+
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+         - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
+
+        :param name: new name of the mind, optional
+        :param model_name: new llm model name, optional
+        :param provider: new llm provider, optional
+        :param prompt_template: new prompt template, optional
+        :param datasources: alter list of datasources used by mind, optional
+        :param parameters, dict: alter other parameters of the mind, optional
+        """
         data = {}
 
         if datasources is not None:
@@ -77,6 +94,15 @@ class Mind:
             self.name = name
 
     def add_datasource(self, datasource: Datasource):
+        """
+        Add datasource to mind
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+         - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
+
+        :param datasource: input datasource
+        """
 
         ds_name = self.client.minds._check_datasource(datasource)
 
@@ -91,6 +117,15 @@ class Mind:
         self.datasources = updated.datasources
 
     def del_datasource(self, datasource: Union[Datasource, str]):
+        """
+        Delete datasource from mind
+
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+
+        :param datasource: datasource to delete
+        """
         if isinstance(datasource, Datasource):
             datasource = datasource.name
         elif not isinstance(datasource, str):
@@ -199,6 +234,23 @@ class Minds:
         parameters=None,
         replace=False,
     ) -> Mind:
+        """
+        Create a new mind and return it
+
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+         - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
+
+        :param name: name of the mind
+        :param model_name: llm model name, optional
+        :param provider: llm provider, optional
+        :param prompt_template: instructions to llm, optional
+        :param datasources: list of datasources used by mind, optional
+        :param parameters, dict: other parameters of the mind, optional
+        :param replace: if true - to remove existing mind, default is false
+        :return: created mind
+        """
 
         if replace:
             try:
