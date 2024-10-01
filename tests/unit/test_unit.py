@@ -5,7 +5,9 @@ from unittest.mock import patch
 
 from minds.datasources.examples import example_ds
 
-from minds.client import Client
+def get_client():
+    from minds.client import Client
+    return Client(API_KEY)
 
 from minds import rest_api
 
@@ -37,7 +39,7 @@ class TestDatasources:
     @patch('requests.post')
     @patch('requests.delete')
     def test_create_datasources(self, mock_del, mock_post, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
         response_mock(mock_get, example_ds.model_dump())
 
         ds = client.datasources.create(example_ds)
@@ -60,7 +62,7 @@ class TestDatasources:
 
     @patch('requests.get')
     def test_get_datasource(self, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
 
         response_mock(mock_get, example_ds.model_dump())
         ds = client.datasources.get(example_ds.name)
@@ -71,7 +73,7 @@ class TestDatasources:
 
     @patch('requests.delete')
     def test_delete_datasource(self, mock_del):
-        client = Client(API_KEY)
+        client = get_client()
 
         client.datasources.drop('ds_name')
 
@@ -80,7 +82,7 @@ class TestDatasources:
 
     @patch('requests.get')
     def test_list_datasources(self, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
 
         response_mock(mock_get, [example_ds.model_dump()])
         ds_list = client.datasources.list()
@@ -90,17 +92,6 @@ class TestDatasources:
 
         args, _ = mock_get.call_args
         assert args[0].endswith(f'/api/datasources')
-
-
-def set_openai_completion(mock_openai, response):
-    mock_openai.return_value = {
-        'choices': [{
-            'message': {
-                'role': 'system',
-                'content': response
-            }
-        }]
-    }
 
 
 class TestMinds:
@@ -127,7 +118,7 @@ class TestMinds:
     @patch('requests.post')
     @patch('requests.delete')
     def test_create(self, mock_del, mock_post, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
 
         mind_name = 'test_mind'
         parameters = {'prompt_template': 'always agree'}
@@ -170,7 +161,7 @@ class TestMinds:
     @patch('requests.get')
     @patch('requests.patch')
     def test_update(self, mock_patch, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
 
         response_mock(mock_get, self.mind_json)
         mind = client.minds.get('mind_name')
@@ -193,7 +184,7 @@ class TestMinds:
 
     @patch('requests.get')
     def test_get(self, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
 
         response_mock(mock_get, self.mind_json)
 
@@ -205,7 +196,7 @@ class TestMinds:
 
     @patch('requests.get')
     def test_list(self, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
 
         response_mock(mock_get, [self.mind_json])
         minds_list = client.minds.list()
@@ -217,30 +208,47 @@ class TestMinds:
 
     @patch('requests.delete')
     def test_delete(self, mock_del):
-        client = Client(API_KEY)
+        client = get_client()
         client.minds.drop('my_name')
 
         args, _ = mock_del.call_args
         assert args[0].endswith(f'/api/projects/mindsdb/minds/my_name')
 
     @patch('requests.get')
-    @patch('openai.OpenAI')
+    @patch('minds.minds.OpenAI')
     def test_completion(self, mock_openai, mock_get):
-        client = Client(API_KEY)
+        client = get_client()
 
         response_mock(mock_get, self.mind_json)
         mind = client.minds.get('mind_name')
 
         openai_response = 'how can I assist you today?'
-        set_openai_completion(mock_openai, openai_response)
 
-        answer = mind.completion('hello')
-        assert answer == openai_response
+        def openai_completion_f(messages, *args, **kwargs):
+            # echo question
+            answer = messages[0]['content']
 
+            response = Mock()
+            choice = Mock()
+            choice.message.content = answer
+            choice.delta.content = answer  # for stream
+            response.choices = [choice]
 
+            if kwargs.get('stream'):
+                return [response]
+            else:
+                return response
 
+        mock_openai().chat.completions.create.side_effect = openai_completion_f
 
+        question = 'the ultimate question'
 
+        answer = mind.completion(question)
+        assert answer == question
 
-
+        success = False
+        for chunk in mind.completion(question, stream=True):
+            if question == chunk.content.lower():
+                success = True
+        assert success is True
 
