@@ -35,14 +35,17 @@ mind = client.minds.create(name='mind_name', datasources=[postgres_config] )
 
 # or separately
 datasource = client.datasources.create(postgres_config)
-mind2 = client.minds.create(name='mind_name', datasources=[datasource] )
+mind = client.minds.create(name='mind_name', datasources=[datasource] )
+
+# with prompt template
+mind = client.minds.create(name='mind_name', prompt_template='You are codding assistant')
 
 # or add to existed mind
-mind3 = client.minds.create(name='mind_name')
+mind = client.minds.create(name='mind_name')
 # by config
-mind2.add_datasource(postgres_config)
+mind.add_datasource(postgres_config)
 # or by datasource
-mind2.add_datasource(datasource)
+mind.add_datasource(datasource)
 
 
 # --- managing minds ---

@@ -28,6 +28,9 @@ class Mind:
         self.name = name
         self.model_name = model_name
         self.provider = provider
+        if parameters is None:
+            parameters = {}
+        self.prompt_template = parameters.pop('prompt_template', None)
         self.parameters = parameters
         self.created_at = created_at
         self.updated_at = updated_at
@@ -39,8 +42,9 @@ class Mind:
         name: str = None,
         model_name: str = None,
         provider=None,
+        prompt_template=None,
+        datasources=None,
         parameters=None,
-        datasources=None
     ):
         data = {}
 
@@ -57,8 +61,13 @@ class Mind:
             data['model_name'] = model_name
         if provider is not None:
             data['provider'] = provider
-        if parameters is not None:
-            data['parameters'] = parameters
+        if parameters is None:
+            parameters = {}
+
+        data['parameters'] = parameters
+
+        if prompt_template is not None:
+            data['parameters']['prompt_template'] = prompt_template
 
         self.api.patch(
             f'/projects/{self.project}/minds/{self.name}',
@@ -185,8 +194,9 @@ class Minds:
         self, name,
         model_name=None,
         provider=None,
-        parameters=None,
+        prompt_template=None,
         datasources=None,
+        parameters=None,
         replace=False,
     ) -> Mind:
 
@@ -206,6 +216,9 @@ class Minds:
 
         if parameters is None:
             parameters = {}
+
+        if prompt_template is not None:
+            parameters['prompt_template'] = prompt_template
         if 'prompt_template' not in parameters:
             parameters['prompt_template'] = DEFAULT_PROMPT_TEMPLATE
 

@@ -88,15 +88,13 @@ def test_minds():
         mind_name,
         replace=True,
         datasources=[ds.name, ds2_cfg],
-        parameters={
-            'prompt_template': prompt1
-        }
+        prompt_template=prompt1
     )
 
     # get
     mind = client.minds.get(mind_name)
     assert len(mind.datasources) == 2
-    assert mind.parameters['prompt_template'] == prompt1
+    assert mind.prompt_template == prompt1
 
     # list
     mind_list = client.minds.list()
@@ -106,9 +104,7 @@ def test_minds():
     mind.update(
         name=mind_name2,
         datasources=[ds.name],
-        parameters={
-            'prompt_template': prompt2
-        }
+        prompt_template=prompt2
     )
     with pytest.raises(ObjectNotFound):
         # this name not exists
@@ -116,7 +112,7 @@ def test_minds():
 
     mind = client.minds.get(mind_name2)
     assert len(mind.datasources) == 1
-    assert mind.parameters['prompt_template'] == prompt2
+    assert mind.prompt_template == prompt2
 
     # add datasource
     mind.add_datasource(ds2_cfg)
