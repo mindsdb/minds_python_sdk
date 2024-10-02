@@ -121,14 +121,14 @@ class TestMinds:
         client = get_client()
 
         mind_name = 'test_mind'
-        parameters = {'prompt_template': 'always agree'}
+        prompt_template = 'always agree'
         datasources = ['my_ds']
         provider = 'openai'
 
         response_mock(mock_get, self.mind_json)
         create_params = {
             'name': mind_name,
-            'parameters': parameters,
+            'prompt_template': prompt_template,
             'datasources': datasources
         }
         mind = client.minds.create(**create_params)
@@ -137,8 +137,9 @@ class TestMinds:
             args, kwargs = mock_post.call_args
             assert args[0].endswith('/api/projects/mindsdb/minds')
             request = kwargs['json']
-            for k, v in create_params.items():
-                assert request[k] == v
+            for key in ('name', 'datasources', 'provider', 'model_name'),:
+                assert request.get(key) == create_params.get(key)
+            assert create_params.get('prompt_template') == request.get('parameters', {}).get('prompt_template')
 
             self.compare_mind(mind, self.mind_json)
 
@@ -147,7 +148,7 @@ class TestMinds:
         # with replace
         create_params = {
             'name': mind_name,
-            'parameters': parameters,
+            'prompt_template': prompt_template,
             'provider': provider,
         }
         mind = client.minds.create(replace=True, **create_params)

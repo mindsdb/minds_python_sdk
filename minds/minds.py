@@ -28,6 +28,9 @@ class Mind:
         self.name = name
         self.model_name = model_name
         self.provider = provider
+        if parameters is None:
+            parameters = {}
+        self.prompt_template = parameters.pop('prompt_template', None)
         self.parameters = parameters
         self.created_at = created_at
         self.updated_at = updated_at
@@ -39,9 +42,27 @@ class Mind:
         name: str = None,
         model_name: str = None,
         provider=None,
+        prompt_template=None,
+        datasources=None,
         parameters=None,
-        datasources=None
     ):
+        """
+        Update mind
+
+        If parameter is set it will be applied to mind
+
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+         - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
+
+        :param name: new name of the mind, optional
+        :param model_name: new llm model name, optional
+        :param provider: new llm provider, optional
+        :param prompt_template: new prompt template, optional
+        :param datasources: alter list of datasources used by mind, optional
+        :param parameters, dict: alter other parameters of the mind, optional
+        """
         data = {}
 
         if datasources is not None:
@@ -57,8 +78,13 @@ class Mind:
             data['model_name'] = model_name
         if provider is not None:
             data['provider'] = provider
-        if parameters is not None:
-            data['parameters'] = parameters
+        if parameters is None:
+            parameters = {}
+
+        data['parameters'] = parameters
+
+        if prompt_template is not None:
+            data['parameters']['prompt_template'] = prompt_template
 
         self.api.patch(
             f'/projects/{self.project}/minds/{self.name}',
@@ -68,6 +94,15 @@ class Mind:
             self.name = name
 
     def add_datasource(self, datasource: Datasource):
+        """
+        Add datasource to mind
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+         - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
+
+        :param datasource: input datasource
+        """
 
         ds_name = self.client.minds._check_datasource(datasource)
 
@@ -82,6 +117,15 @@ class Mind:
         self.datasources = updated.datasources
 
     def del_datasource(self, datasource: Union[Datasource, str]):
+        """
+        Delete datasource from mind
+
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+
+        :param datasource: datasource to delete
+        """
         if isinstance(datasource, Datasource):
             datasource = datasource.name
         elif not isinstance(datasource, str):
@@ -126,11 +170,11 @@ class Mind:
             stream=stream
         )
         if stream:
-            return self.stream_response(response)
+            return self._stream_response(response)
         else:
             return response.choices[0].message.content
 
-    def stream_response(self, response):
+    def _stream_response(self, response):
         for chunk in response:
             yield chunk.choices[0].delta
 
@@ -143,6 +187,12 @@ class Minds:
         self.project = 'mindsdb'
 
     def list(self) -> List[Mind]:
+        """
+        Returns list of minds
+
+        :return: iterable
+        """
+
         data = self.api.get(f'/projects/{self.project}/minds').json()
         minds_list = []
         for item in data:
@@ -150,6 +200,13 @@ class Minds:
         return minds_list
 
     def get(self, name: str) -> Mind:
+        """
+        Get mind by name
+
+        :param name: name of the mind
+        :return: a mind object
+        """
+
         item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
         return Mind(self.client, **item)
 
@@ -172,10 +229,28 @@ class Minds:
         self, name,
         model_name=None,
         provider=None,
-        parameters=None,
+        prompt_template=None,
         datasources=None,
+        parameters=None,
         replace=False,
     ) -> Mind:
+        """
+        Create a new mind and return it
+
+        Datasource can be passed as
+         - name, str
+         - Datasource object (minds.datasources.Database)
+         - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
+
+        :param name: name of the mind
+        :param model_name: llm model name, optional
+        :param provider: llm provider, optional
+        :param prompt_template: instructions to llm, optional
+        :param datasources: list of datasources used by mind, optional
+        :param parameters, dict: other parameters of the mind, optional
+        :param replace: if true - to remove existing mind, default is false
+        :return: created mind
+        """
 
         if replace:
             try:
@@ -193,6 +268,9 @@ class Minds:
 
         if parameters is None:
             parameters = {}
+
+        if prompt_template is not None:
+            parameters['prompt_template'] = prompt_template
         if 'prompt_template' not in parameters:
             parameters['prompt_template'] = DEFAULT_PROMPT_TEMPLATE
 
@@ -211,4 +289,10 @@ class Minds:
         return mind
 
     def drop(self, name: str):
+       """
+       Drop mind by name
+
+       :param name: name of the mind
+       """
+
        self.api.delete(f'/projects/{self.project}/minds/{name}')
