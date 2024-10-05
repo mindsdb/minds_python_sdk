@@ -180,6 +180,3 @@ The project uses structured error handling for various steps, including database
 - **Testing**: Add unit tests to cover the critical paths, including table creation and data querying.
 
 This project offers a foundational understanding of how to interact with MindsDB using Go and sets the stage for building more advanced machine learning applications on top of MindsDB.
-```
-
-This should serve as the README for your project. It includes setup instructions, an explanation of the code, running instructions, and further improvement suggestions.
