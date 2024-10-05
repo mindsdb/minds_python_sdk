@@ -160,6 +160,8 @@ Here is the formatted content for `README.md`:
 ```markdown
 # MindsDB Golang SDK
 
+git Link: https://github.com/Zedoman/MINDS_GO_SDK
+
 This project demonstrates how to build a client for MindsDB using Go and MySQL. The client connects to MindsDB, creates a table (if not already created), inserts sample data, and queries the `predictors` table. The solution emphasizes robustness, clarity, and ease of use.
 
 ## Features
@@ -314,6 +316,8 @@ Predictor 1
 Predictor 2
 Predictor 3
 ```
+
+
 
 ---
 
