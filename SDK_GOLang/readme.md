@@ -4,6 +4,11 @@ git:- https://github.com/Zedoman/MINDS_GO_SDK
 
 This project implements a simple REST API for managing **Predictors** using Go and MongoDB Atlas. The API allows users to create and retrieve predictors from a MongoDB collection.
 
+<img width="929" alt="Screenshot 2024-10-05 at 22 33 28" src="https://github.com/user-attachments/assets/c9e0f2f1-55ac-4675-8fcf-e86094ca540e">
+<img width="706" alt="Screenshot 2024-10-05 at 22 33 17" src="https://github.com/user-attachments/assets/e50b84ad-3367-4eb1-8e80-fbdc01ab78e8">
+<img width="554" alt="Screenshot 2024-10-05 at 22 33 02" src="https://github.com/user-attachments/assets/67dca533-7658-4f5a-bde0-1fd69642fbc0">
+
+
 ## Prerequisites
 
 To run this project, ensure that you have the following tools installed on your machine:
