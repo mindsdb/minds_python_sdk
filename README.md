@@ -17,11 +17,11 @@ To get started, you'll need to initialize the Client with your API key. If you'r
 ```python
 from minds.client import Client
 
-# Default connection to MindsDB Cloud
+# Default connection to Minds Cloud that uses 'https://mdb.ai' as the base URL
 client = Client("YOUR_API_KEY")
 
-# Custom MindsDB Cloud server
-base_url = 'https://custom_cloud.mdb.ai/'
+# If you have self-hosted Minds Cloud instance, use your custom base URL
+base_url = 'https://<custom_cloud>.mdb.ai/'
 client = Client("YOUR_API_KEY", base_url)
 ```
 
