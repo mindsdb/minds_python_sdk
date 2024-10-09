@@ -33,8 +33,8 @@ class Mind:
             parameters = {}
         self.prompt_template = parameters.pop('prompt_template', None)
         self.parameters = parameters
-        self.created_at = datetime.strptime(created_at, "%a, %d %b %Y %H:%M:%S %Z").strftime("%Y-%m-%dT%H:%M:%S")
-        self.updated_at = datetime.strptime(updated_at, "%a, %d %b %Y %H:%M:%S %Z").strftime("%Y-%m-%dT%H:%M:%S")
+        self.created_at = created_at
+        self.updated_at = updated_at
 
         self.datasources = datasources
 
@@ -42,8 +42,8 @@ class Mind:
         return (f'Mind(name={self.name}, '
                 f'model_name={self.model_name}, '
                 f'provider={self.provider}, '
-                f'created_at={self.created_at}, '
-                f'updated_at={self.updated_at}, '
+                f'created_at="{self.created_at}", '
+                f'updated_at="{self.updated_at}", '
                 f'parameters={self.parameters}, '
                 f'datasources={self.datasources})')
 
