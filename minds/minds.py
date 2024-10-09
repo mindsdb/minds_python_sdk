@@ -1,5 +1,6 @@
 from typing import List, Union, Iterable
 from urllib.parse import urlparse, urlunparse
+from datetime import datetime
 
 from openai import OpenAI
 
@@ -32,8 +33,8 @@ class Mind:
             parameters = {}
         self.prompt_template = parameters.pop('prompt_template', None)
         self.parameters = parameters
-        self.created_at = created_at
-        self.updated_at = updated_at
+        self.created_at = datetime.strptime(created_at, "%a, %d %b %Y %H:%M:%S %Z").strftime("%Y-%m-%dT%H:%M:%S")
+        self.updated_at = datetime.strptime(updated_at, "%a, %d %b %Y %H:%M:%S %Z").strftime("%Y-%m-%dT%H:%M:%S")
 
         self.datasources = datasources
 
