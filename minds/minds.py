@@ -3,7 +3,7 @@ from urllib.parse import urlparse, urlunparse
 from datetime import datetime
 
 from openai import OpenAI
-
+import minds.utils as utils
 import minds.exceptions as exc
 
 from minds.datasources import Datasource, DatabaseConfig
@@ -26,6 +26,11 @@ class Mind:
         self.client = client
         self.project = 'mindsdb'
 
+        if not utils.validate_mind_name(name):
+            raise exc.MindNameInvalid("""
+                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
+                    Spaces are not allowed.""")
+        
         self.name = name
         self.model_name = model_name
         self.provider = provider
@@ -74,6 +79,11 @@ class Mind:
         :param parameters, dict: alter other parameters of the mind, optional
         """
         data = {}
+        
+        if not utils.validate_mind_name(name):
+            raise exc.MindNameInvalid("""
+                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
+                    Spaces are not allowed.""")
 
         if datasources is not None:
             ds_names = []
@@ -216,7 +226,11 @@ class Minds:
         :param name: name of the mind
         :return: a mind object
         """
-
+        if not utils.validate_mind_name(name):
+            raise exc.MindNameInvalid("""
+                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
+                    Spaces are not allowed.""")
+        
         item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
         return Mind(self.client, **item)
 
@@ -261,6 +275,11 @@ class Minds:
         :param replace: if true - to remove existing mind, default is false
         :return: created mind
         """
+        
+        if not utils.validate_mind_name(name):
+            raise exc.MindNameInvalid("""
+                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
+                    Spaces are not allowed.""")
 
         if replace:
             try:
@@ -304,5 +323,10 @@ class Minds:
 
        :param name: name of the mind
        """
+
+       if not utils.validate_mind_name(name):
+            raise exc.MindNameInvalid("""
+                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
+                    Spaces are not allowed.""")
 
        self.api.delete(f'/projects/{self.project}/minds/{name}')
