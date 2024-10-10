@@ -1,5 +1,6 @@
 from typing import List, Union, Iterable
 from urllib.parse import urlparse, urlunparse
+from datetime import datetime
 
 from openai import OpenAI
 
@@ -36,6 +37,15 @@ class Mind:
         self.updated_at = updated_at
 
         self.datasources = datasources
+
+    def __repr__(self):
+        return (f'Mind(name={self.name}, '
+                f'model_name={self.model_name}, '
+                f'provider={self.provider}, '
+                f'created_at="{self.created_at}", '
+                f'updated_at="{self.updated_at}", '
+                f'parameters={self.parameters}, '
+                f'datasources={self.datasources})')
 
     def update(
         self,
