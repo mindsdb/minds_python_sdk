@@ -1,7 +1,5 @@
 from typing import List, Union, Iterable
-from urllib.parse import urlparse, urlunparse
-from datetime import datetime
-
+import utils
 from openai import OpenAI
 
 import minds.exceptions as exc
@@ -9,7 +7,6 @@ import minds.exceptions as exc
 from minds.datasources import Datasource, DatabaseConfig
 
 DEFAULT_PROMPT_TEMPLATE = 'Use your database tools to answer the user\'s question: {{question}}'
-
 
 class Mind:
     def __init__(
@@ -35,7 +32,11 @@ class Mind:
         self.parameters = parameters
         self.created_at = created_at
         self.updated_at = updated_at
-
+        base_url = utils.create_base_url_openai(self.api.base_url)
+        self.openai_client = OpenAI(
+            api_key=self.api.api_key,
+            base_url=base_url
+        )
         self.datasources = datasources
 
     def __repr__(self):
@@ -156,23 +157,7 @@ class Mind:
 
         :return: string if stream mode is off or iterator of ChoiceDelta objects (by openai)
         """
-        parsed = urlparse(self.api.base_url)
-
-        netloc = parsed.netloc
-        if netloc == 'mdb.ai':
-            llm_host = 'llm.mdb.ai'
-        else:
-            llm_host = 'ai.' + netloc
-
-        parsed = parsed._replace(path='', netloc=llm_host)
-
-        base_url = urlunparse(parsed)
-        openai_client = OpenAI(
-            api_key=self.api.api_key,
-            base_url=base_url
-        )
-
-        response = openai_client.chat.completions.create(
+        response = self.openai_client.chat.completions.create(
             model=self.name,
             messages=[
                 {'role': 'user', 'content': message}
