@@ -27,9 +27,7 @@ class Mind:
         self.project = 'mindsdb'
 
         if not utils.validate_mind_name(name):
-            raise exc.MindNameInvalid("""
-                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
-                    Spaces are not allowed.""")
+            raise exc.MindNameInvalid("Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. Spaces are not allowed.")
         
         self.name = name
         self.model_name = model_name
@@ -81,9 +79,7 @@ class Mind:
         data = {}
         
         if not utils.validate_mind_name(name):
-            raise exc.MindNameInvalid("""
-                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
-                    Spaces are not allowed.""")
+            raise exc.MindNameInvalid("Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. Spaces are not allowed.")
 
         if datasources is not None:
             ds_names = []
@@ -227,9 +223,7 @@ class Minds:
         :return: a mind object
         """
         if not utils.validate_mind_name(name):
-            raise exc.MindNameInvalid("""
-                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
-                    Spaces are not allowed.""")
+            raise exc.MindNameInvalid("Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. Spaces are not allowed.")
         
         item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
         return Mind(self.client, **item)
@@ -277,9 +271,7 @@ class Minds:
         """
         
         if not utils.validate_mind_name(name):
-            raise exc.MindNameInvalid("""
-                    Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. 
-                    Spaces are not allowed.""")
+            raise exc.MindNameInvalid("Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. Spaces are not allowed.")
 
         if replace:
             try:
