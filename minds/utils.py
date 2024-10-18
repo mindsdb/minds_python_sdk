@@ -1,6 +1,6 @@
 from urllib.parse import urlparse, urlunparse
 
-def create_base_url_openai(base_url: str) -> str:
+def get_openai_base_url(base_url: str) -> str:
     parsed = urlparse(base_url)
 
     netloc = parsed.netloc
