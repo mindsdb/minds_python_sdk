@@ -1,4 +1,5 @@
 import re
+import minds.exceptions as exc
 
 def validate_mind_name(mind_name):
     """
@@ -20,4 +21,6 @@ def validate_mind_name(mind_name):
     pattern = r'^[A-Za-z][A-Za-z0-9_]{0,31}$'
 
     # Check if the Mind name matches the pattern
-    return re.match(pattern, mind_name)
+    if not re.match(pattern, mind_name):
+        raise exc.MindNameInvalid("Mind name should start with a letter and contain only letters, numbers or underscore, with a maximum of 32 characters. Spaces are not allowed.")
+    
