@@ -32,7 +32,7 @@ class Mind:
         self.parameters = parameters
         self.created_at = created_at
         self.updated_at = updated_at
-        base_url = utils.create_base_url_openai(self.api.base_url)
+        base_url = utils.get_openai_base_url(self.api.base_url)
         self.openai_client = OpenAI(
             api_key=self.api.api_key,
             base_url=base_url
