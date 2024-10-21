@@ -76,11 +76,15 @@ class Datasources:
             raise exc.ObjectNotSupported(f'Wrong type of datasource: {name}')
         return Datasource(**data)
 
-    def drop(self, name: str):
+    def drop(self, name: str, cascade=False):
         """
         Drop datasource by name
 
         :param name: name of datasource
+        :param cascade: if True - remove from all minds, default: False
         """
+        data = None
+        if cascade:
+            data = {'cascade': True}
 
-        self.api.delete(f'/datasources/{name}')
+        self.api.delete(f'/datasources/{name}', data=data)

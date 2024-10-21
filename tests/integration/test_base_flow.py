@@ -31,7 +31,7 @@ def test_datasources():
 
     # remove previous object
     try:
-        client.datasources.drop(example_ds.name)
+        client.datasources.drop(example_ds.name, cascade=True)
     except ObjectNotFound:
         ...
 
