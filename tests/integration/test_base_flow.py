@@ -93,6 +93,12 @@ def test_minds():
         datasources=[ds.name, ds2_cfg],
         prompt_template=prompt1
     )
+    mind = client.minds.create(
+        mind_name,
+        update=True,
+        datasources=[ds.name, ds2_cfg],
+        prompt_template=prompt1
+    )
 
     # get
     mind = client.minds.get(mind_name)

@@ -243,6 +243,7 @@ class Minds:
         datasources=None,
         parameters=None,
         replace=False,
+        update=False,
     ) -> Mind:
         """
         Create a new mind and return it
@@ -259,6 +260,7 @@ class Minds:
         :param datasources: list of datasources used by mind, optional
         :param parameters, dict: other parameters of the mind, optional
         :param replace: if true - to remove existing mind, default is false
+        :param update: if true - to update mind if exists, default is false
         :return: created mind
         """
 
@@ -284,7 +286,12 @@ class Minds:
         if 'prompt_template' not in parameters:
             parameters['prompt_template'] = DEFAULT_PROMPT_TEMPLATE
 
-        self.api.post(
+        if update:
+            method = self.api.put
+        else:
+            method = self.api.post
+
+        method(
             f'/projects/{self.project}/minds',
             data={
                 'name': name,

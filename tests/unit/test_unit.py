@@ -120,9 +120,10 @@ class TestMinds:
         assert mind.parameters == mind_json['parameters']
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create(self, mock_del, mock_post, mock_get):
+    def test_create(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
 
         mind_name = 'test_mind'
@@ -150,7 +151,7 @@ class TestMinds:
 
         check_mind_created(mind, mock_post, create_params)
 
-        # with replace
+        # -- with replace --
         create_params = {
             'name': mind_name,
             'prompt_template': prompt_template,
@@ -163,6 +164,14 @@ class TestMinds:
         assert args[0].endswith(f'/api/projects/mindsdb/minds/{mind_name}')
 
         check_mind_created(mind, mock_post, create_params)
+
+        # -- with update --
+        mock_del.reset_mock()
+        mind = client.minds.create(update=True, **create_params)
+        # is not deleted
+        assert not mock_del.called
+
+        check_mind_created(mind, mock_put, create_params)
 
     @patch('requests.get')
     @patch('requests.patch')
