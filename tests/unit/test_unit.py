@@ -36,9 +36,10 @@ class TestDatasources:
         assert ds1.tables == ds2.tables
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create_datasources(self, mock_del, mock_post, mock_get):
+    def test_create_datasources(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
         response_mock(mock_get, example_ds.model_dump())
 
@@ -59,6 +60,10 @@ class TestDatasources:
         assert args[0].endswith(f'/api/datasources/{example_ds.name}')
 
         check_ds_created(ds, mock_post)
+
+        # with update
+        ds = client.datasources.create(example_ds, update=True)
+        check_ds_created(ds, mock_put)
 
     @patch('requests.get')
     def test_get_datasource(self, mock_get):
