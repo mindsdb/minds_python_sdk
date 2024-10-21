@@ -38,7 +38,7 @@ class Datasources:
         if replace:
             try:
                 self.get(name)
-                self.drop(name)
+                self.drop(name, force=True)
             except exc.ObjectNotFound:
                 ...
 
@@ -76,15 +76,15 @@ class Datasources:
             raise exc.ObjectNotSupported(f'Wrong type of datasource: {name}')
         return Datasource(**data)
 
-    def drop(self, name: str, cascade=False):
+    def drop(self, name: str, force=False):
         """
         Drop datasource by name
 
         :param name: name of datasource
-        :param cascade: if True - remove from all minds, default: False
+        :param force: if True - remove from all minds, default: False
         """
         data = None
-        if cascade:
+        if force:
             data = {'cascade': True}
 
         self.api.delete(f'/datasources/{name}', data=data)
