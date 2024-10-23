@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
-import utils
+import minds.utils as utils
 import minds.exceptions as exc
 
 class DatabaseConfig(BaseModel):
@@ -34,6 +34,8 @@ class Datasources:
         """
 
         name = ds_config.name
+
+        utils.validate_datasource_name(name)
 
         if replace:
             try:

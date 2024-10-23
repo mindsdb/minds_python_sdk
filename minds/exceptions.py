@@ -18,3 +18,6 @@ class Unauthorized(Exception):
 class UnknownError(Exception):
     ...
 
+
+class DatasourceNameInvalid(Exception):
+    ...
