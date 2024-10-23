@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
-
+import utils
 import minds.exceptions as exc
 
 class DatabaseConfig(BaseModel):
