@@ -35,7 +35,6 @@ class Mind:
         self.parameters = parameters
         self.created_at = created_at
         self.updated_at = updated_at
-
         self.datasources = datasources
 
     def __repr__(self):
@@ -100,12 +99,19 @@ class Mind:
             f'/projects/{self.project}/minds/{self.name}',
             data=data
         )
+
         if name is not None and name != self.name:
             self.name = name
 
-        refreshed_mind = self.client.get(self.name)
+        refreshed_mind = self.client.minds.get(self.name)
+        self.model_name = refreshed_mind.model_name
+        self.provider = refreshed_mind.provider
+        self.prompt_template = refreshed_mind.prompt_template
         self.parameters = refreshed_mind.parameters
-        
+        self.created_at = refreshed_mind.created_at
+        self.updated_at = refreshed_mind.updated_at
+        self.datasources = refreshed_mind.datasources
+
 
     def add_datasource(self, datasource: Datasource):
         """
