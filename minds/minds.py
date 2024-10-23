@@ -103,6 +103,10 @@ class Mind:
         if name is not None and name != self.name:
             self.name = name
 
+        refreshed_mind = self.client.get(self.name)
+        self.parameters = refreshed_mind.parameters
+        
+
     def add_datasource(self, datasource: Datasource):
         """
         Add datasource to mind
