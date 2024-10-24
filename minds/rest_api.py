@@ -57,6 +57,16 @@ class RestAPI:
         _raise_for_status(resp)
         return resp
 
+    def put(self, url, data):
+        resp = requests.put(
+            self.base_url + url,
+            headers=self._headers(),
+            json=data,
+        )
+
+        _raise_for_status(resp)
+        return resp
+
     def patch(self, url, data):
         resp = requests.patch(
             self.base_url + url,
