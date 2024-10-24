@@ -149,3 +149,5 @@ client.datasources.drop('my_datasource')
 ```
 >Note: The SDK currently does not support automatically removing a data source if it is no longer connected to any mind.
 
+### Other SDKs
+#### Ruby SDK: [https://github.com/tungnt1203/minds_ruby_sdk](https://github.com/tungnt1203/minds_ruby_sdk)
