@@ -149,3 +149,5 @@ client.datasources.drop('my_datasource')
 ```
 >Note: The SDK currently does not support automatically removing a data source if it is no longer connected to any mind.
 
+### Other SDKs
+- **C# SDK**:- [Minds.SDK](https://github.com/priyanshuverma-dev/Minds.SDK)
