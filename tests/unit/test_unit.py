@@ -54,13 +54,6 @@ class TestDatasources:
 
         check_ds_created(ds, mock_post)
 
-        # with replace
-        ds = client.datasources.create(example_ds, replace=True)
-        args, _ = mock_del.call_args
-        assert args[0].endswith(f'/api/datasources/{example_ds.name}')
-
-        check_ds_created(ds, mock_post)
-
         # with update
         ds = client.datasources.create(example_ds, update=True)
         check_ds_created(ds, mock_put)

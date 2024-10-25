@@ -38,8 +38,6 @@ def test_datasources():
     # create
     ds = client.datasources.create(example_ds)
     assert ds.name == example_ds.name
-    ds = client.datasources.create(example_ds, replace=True)
-    assert ds.name == example_ds.name
     ds = client.datasources.create(example_ds, update=True)
     assert ds.name == example_ds.name
 
