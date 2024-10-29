@@ -37,7 +37,8 @@ def test_datasources():
 
     # create
     ds = client.datasources.create(example_ds)
-    ds = client.datasources.create(example_ds, replace=True)
+    assert ds.name == example_ds.name
+    ds = client.datasources.create(example_ds, update=True)
     assert ds.name == example_ds.name
 
     # get
@@ -87,6 +88,12 @@ def test_minds():
     mind = client.minds.create(
         mind_name,
         replace=True,
+        datasources=[ds.name, ds2_cfg],
+        prompt_template=prompt1
+    )
+    mind = client.minds.create(
+        mind_name,
+        update=True,
         datasources=[ds.name, ds2_cfg],
         prompt_template=prompt1
     )
