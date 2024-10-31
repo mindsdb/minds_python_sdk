@@ -73,7 +73,7 @@ def test_minds():
     # prepare datasources
     ds_cfg = copy.copy(example_ds)
     ds_cfg.name = ds_name
-    ds = client.datasources.create(example_ds, replace=True)
+    ds = client.datasources.create(example_ds, update=True)
 
     # second datasource
     ds2_cfg = copy.copy(example_ds)
