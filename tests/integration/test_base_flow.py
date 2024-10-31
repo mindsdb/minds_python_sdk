@@ -13,8 +13,8 @@ from minds.exceptions import ObjectNotFound, MindNameInvalid
 
 
 def get_client():
-    api_key = os.getenv('API_KEY')
-    base_url = os.getenv('BASE_URL', 'https://dev.mindsdb.com')
+    api_key = os.getenv('MINDS_API_KEY')
+    base_url = os.getenv('MINDS_BASE_URL', 'https://dev.mindsdb.com')
 
     return Client(api_key, base_url=base_url)
 
