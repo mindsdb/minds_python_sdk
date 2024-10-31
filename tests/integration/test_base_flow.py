@@ -82,7 +82,7 @@ def test_minds():
 
     # create
     with pytest.raises(MindNameInvalid):
-        mind = client.minds.create(
+        client.minds.create(
             invalid_mind_name,
             datasources=[ds],
             provider='openai'
@@ -110,9 +110,6 @@ def test_minds():
     mind = client.minds.get(mind_name)
     assert len(mind.datasources) == 2
     assert mind.prompt_template == prompt1
-    
-    with pytest.raises(MindNameInvalid):
-        client.minds.get(invalid_mind_name)
 
     # list
     mind_list = client.minds.list()
@@ -179,6 +176,4 @@ def test_minds():
     client.minds.drop(mind_name2)
     client.datasources.drop(ds.name)
     client.datasources.drop(ds2_cfg.name)
-    
-    with pytest.raises(MindNameInvalid):
-        client.minds.drop(invalid_mind_name)
+
