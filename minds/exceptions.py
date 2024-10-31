@@ -19,5 +19,9 @@ class UnknownError(Exception):
     ...
 
 
+class MindNameInvalid(Exception):
+    ...
+
+
 class DatasourceNameInvalid(Exception):
     ...
