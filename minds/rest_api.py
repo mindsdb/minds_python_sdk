@@ -37,14 +37,28 @@ class RestAPI:
         _raise_for_status(resp)
         return resp
 
-    def delete(self, url):
-        resp = requests.delete(self.base_url + url, headers=self._headers())
+    def delete(self, url, data=None):
+        resp = requests.delete(
+            self.base_url + url,
+            headers=self._headers(),
+            json=data
+        )
 
         _raise_for_status(resp)
         return resp
 
     def post(self, url, data):
         resp = requests.post(
+            self.base_url + url,
+            headers=self._headers(),
+            json=data,
+        )
+
+        _raise_for_status(resp)
+        return resp
+
+    def put(self, url, data):
+        resp = requests.put(
             self.base_url + url,
             headers=self._headers(),
             json=data,
