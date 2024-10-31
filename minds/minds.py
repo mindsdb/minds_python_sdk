@@ -1,11 +1,9 @@
 from typing import List, Union, Iterable
 from urllib.parse import urlparse, urlunparse
-from datetime import datetime
 
 from openai import OpenAI
-
+import minds.utils as utils
 import minds.exceptions as exc
-
 from minds.datasources import Datasource, DatabaseConfig
 
 DEFAULT_PROMPT_TEMPLATE = 'Use your database tools to answer the user\'s question: {{question}}'
@@ -25,7 +23,7 @@ class Mind:
         self.api = client.api
         self.client = client
         self.project = 'mindsdb'
-
+        
         self.name = name
         self.model_name = model_name
         self.provider = provider
@@ -73,6 +71,9 @@ class Mind:
         :param parameters, dict: alter other parameters of the mind, optional
         """
         data = {}
+        
+        if name is not None:
+            utils.validate_mind_name(name)
 
         if datasources is not None:
             ds_names = []
@@ -226,7 +227,7 @@ class Minds:
         :param name: name of the mind
         :return: a mind object
         """
-
+        
         item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
         return Mind(self.client, **item)
 
@@ -253,6 +254,7 @@ class Minds:
         datasources=None,
         parameters=None,
         replace=False,
+        update=False,
     ) -> Mind:
         """
         Create a new mind and return it
@@ -269,8 +271,12 @@ class Minds:
         :param datasources: list of datasources used by mind, optional
         :param parameters, dict: other parameters of the mind, optional
         :param replace: if true - to remove existing mind, default is false
+        :param update: if true - to update mind if exists, default is false
         :return: created mind
         """
+        
+        if name is not None:
+            utils.validate_mind_name(name)
 
         if replace:
             try:
@@ -294,7 +300,12 @@ class Minds:
         if 'prompt_template' not in parameters:
             parameters['prompt_template'] = DEFAULT_PROMPT_TEMPLATE
 
-        self.api.post(
+        if update:
+            method = self.api.put
+        else:
+            method = self.api.post
+
+        method(
             f'/projects/{self.project}/minds',
             data={
                 'name': name,

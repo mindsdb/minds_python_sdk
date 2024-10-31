@@ -36,9 +36,10 @@ class TestDatasources:
         assert ds1.tables == ds2.tables
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create_datasources(self, mock_del, mock_post, mock_get):
+    def test_create_datasources(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
         response_mock(mock_get, example_ds.model_dump())
 
@@ -53,12 +54,9 @@ class TestDatasources:
 
         check_ds_created(ds, mock_post)
 
-        # with replace
-        ds = client.datasources.create(example_ds, replace=True)
-        args, _ = mock_del.call_args
-        assert args[0].endswith(f'/api/datasources/{example_ds.name}')
-
-        check_ds_created(ds, mock_post)
+        # with update
+        ds = client.datasources.create(example_ds, update=True)
+        check_ds_created(ds, mock_put)
 
     @patch('requests.get')
     def test_get_datasource(self, mock_get):
@@ -115,9 +113,10 @@ class TestMinds:
         assert mind.parameters == mind_json['parameters']
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create(self, mock_del, mock_post, mock_get):
+    def test_create(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
 
         mind_name = 'test_mind'
@@ -145,7 +144,7 @@ class TestMinds:
 
         check_mind_created(mind, mock_post, create_params)
 
-        # with replace
+        # -- with replace --
         create_params = {
             'name': mind_name,
             'prompt_template': prompt_template,
@@ -158,6 +157,14 @@ class TestMinds:
         assert args[0].endswith(f'/api/projects/mindsdb/minds/{mind_name}')
 
         check_mind_created(mind, mock_post, create_params)
+
+        # -- with update --
+        mock_del.reset_mock()
+        mind = client.minds.create(update=True, **create_params)
+        # is not deleted
+        assert not mock_del.called
+
+        check_mind_created(mind, mock_put, create_params)
 
     @patch('requests.get')
     @patch('requests.patch')
