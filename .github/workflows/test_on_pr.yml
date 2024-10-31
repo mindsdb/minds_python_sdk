@@ -28,3 +28,4 @@ jobs:
     - name: Run tests
       run: |
         env PYTHONPATH=./ pytest tests/unit
+        env PYTHONPATH=./ pytest tests/integration
