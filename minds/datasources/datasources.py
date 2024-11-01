@@ -16,11 +16,12 @@ class DatabaseConfig(BaseModel):
 class Datasource(DatabaseConfig):
     ...
 
+
 class Datasources:
     def __init__(self, client):
         self.api = client.api
 
-    def create(self, ds_config: DatabaseConfig, replace=False):
+    def create(self, ds_config: DatabaseConfig, update=False):
         """
         Create new datasource and return it
 
@@ -30,19 +31,16 @@ class Datasources:
            - description: str, description of the database. Used by mind to know what data can be got from it.
            - connection_data: dict, optional, credentials to connect to database
            - tables: list of str, optional, list of allowed tables
+        :param update: if true - to update datasourse if exists, default is false
         :return: datasource object
         """
 
         name = ds_config.name
 
-        if replace:
-            try:
-                self.get(name)
-                self.drop(name, force=True)
-            except exc.ObjectNotFound:
-                ...
-
-        self.api.post('/datasources', data=ds_config.model_dump())
+        if update:
+            self.api.put('/datasources', data=ds_config.model_dump())
+        else:
+            self.api.post('/datasources', data=ds_config.model_dump())
         return self.get(name)
 
     def list(self) -> List[Datasource]:
