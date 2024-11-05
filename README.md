@@ -151,3 +151,4 @@ client.datasources.drop('my_datasource')
 
 ### Other SDKs
 #### [Command-Line](https://github.com/Better-Boy/minds-cli-sdk)
+#### [Go-Sdk](https://github.com/ashish111333/minds-go-sdk)
