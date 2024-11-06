@@ -1,5 +1,4 @@
 from typing import List, Union, Iterable
-import utils
 from openai import OpenAI
 import minds.utils as utils
 import minds.exceptions as exc
