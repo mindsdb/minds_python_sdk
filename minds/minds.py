@@ -1,5 +1,4 @@
 from typing import List, Union, Iterable
-import utils
 from openai import OpenAI
 import minds.utils as utils
 import minds.exceptions as exc
@@ -278,11 +277,13 @@ class Minds:
 
         if update:
             method = self.api.put
+            url = f'/projects/{self.project}/minds/{name}'
         else:
             method = self.api.post
+            url = f'/projects/{self.project}/minds'
 
         method(
-            f'/projects/{self.project}/minds',
+            url,
             data={
                 'name': name,
                 'model_name': model_name,

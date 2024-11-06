@@ -38,7 +38,7 @@ class Datasources:
         name = ds_config.name
 
         if update:
-            self.api.put('/datasources', data=ds_config.model_dump())
+            self.api.put(f'/datasources/{name}', data=ds_config.model_dump())
         else:
             self.api.post('/datasources', data=ds_config.model_dump())
         return self.get(name)
