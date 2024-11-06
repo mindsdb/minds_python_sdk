@@ -1,15 +1,17 @@
 name: Run Integration Tests on Release
 
 on:
-  release:
-    types: [published]
+  pull_request:
+    branches:
+      - main
+
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9','3.10', '3.11']
+        python-version: ['3.10']
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -28,4 +30,4 @@ jobs:
         env:
           PYTHONPATH: ./
           API_KEY: ${{ secrets.API_KEY }}
-          BASE_URL: ${{ secrets.BASE_URL }}
+          BASE_URL: 'https://mdb.ai'

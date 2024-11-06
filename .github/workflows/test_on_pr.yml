@@ -28,8 +28,3 @@ jobs:
     - name: Run tests
       run: |
         env PYTHONPATH=./ pytest tests/unit
-        env PYTHONPATH=./ pytest tests/integration
-      env:
-          PYTHONPATH: ./
-          API_KEY: ${{ secrets.API_KEY }}
-          BASE_URL: 'https://mdb.ai'
