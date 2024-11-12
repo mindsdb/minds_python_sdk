@@ -150,4 +150,4 @@ client.datasources.drop('my_datasource')
 >Note: The SDK currently does not support automatically removing a data source if it is no longer connected to any mind.
 
 ### Other SDKs
-#### [Command-Line](https://github.com/Better-Boy/minds-cli-sdk)
+#### [Minds_JS_SDK](https://github.com/Aashish079/minds_JS_SDK)
