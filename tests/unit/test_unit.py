@@ -36,29 +36,27 @@ class TestDatasources:
         assert ds1.tables == ds2.tables
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create_datasources(self, mock_del, mock_post, mock_get):
+    def test_create_datasources(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
         response_mock(mock_get, example_ds.model_dump())
 
         ds = client.datasources.create(example_ds)
-        def check_ds_created(ds, mock_post):
+        def check_ds_created(ds, mock_post, url):
             self._compare_ds(ds, example_ds)
             args, kwargs = mock_post.call_args
 
             assert kwargs['headers'] == {'Authorization': 'Bearer ' + API_KEY}
             assert kwargs['json'] == example_ds.model_dump()
-            assert args[0] == 'https://mdb.ai/api/datasources'
+            assert args[0] == url
 
-        check_ds_created(ds, mock_post)
+        check_ds_created(ds, mock_post, 'https://mdb.ai/api/datasources')
 
-        # with replace
-        ds = client.datasources.create(example_ds, replace=True)
-        args, _ = mock_del.call_args
-        assert args[0].endswith(f'/api/datasources/{example_ds.name}')
-
-        check_ds_created(ds, mock_post)
+        # with update
+        ds = client.datasources.create(example_ds, update=True)
+        check_ds_created(ds, mock_put, f'https://mdb.ai/api/datasources/{ds.name}')
 
     @patch('requests.get')
     def test_get_datasource(self, mock_get):
@@ -115,9 +113,10 @@ class TestMinds:
         assert mind.parameters == mind_json['parameters']
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create(self, mock_del, mock_post, mock_get):
+    def test_create(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
 
         mind_name = 'test_mind'
@@ -133,9 +132,9 @@ class TestMinds:
         }
         mind = client.minds.create(**create_params)
 
-        def check_mind_created(mind, mock_post, create_params):
+        def check_mind_created(mind, mock_post, create_params, url):
             args, kwargs = mock_post.call_args
-            assert args[0].endswith('/api/projects/mindsdb/minds')
+            assert args[0].endswith(url)
             request = kwargs['json']
             for key in ('name', 'datasources', 'provider', 'model_name'),:
                 assert request.get(key) == create_params.get(key)
@@ -143,9 +142,9 @@ class TestMinds:
 
             self.compare_mind(mind, self.mind_json)
 
-        check_mind_created(mind, mock_post, create_params)
+        check_mind_created(mind, mock_post, create_params, '/api/projects/mindsdb/minds')
 
-        # with replace
+        # -- with replace --
         create_params = {
             'name': mind_name,
             'prompt_template': prompt_template,
@@ -157,7 +156,15 @@ class TestMinds:
         args, _ = mock_del.call_args
         assert args[0].endswith(f'/api/projects/mindsdb/minds/{mind_name}')
 
-        check_mind_created(mind, mock_post, create_params)
+        check_mind_created(mind, mock_post, create_params, '/api/projects/mindsdb/minds')
+
+        # -- with update --
+        mock_del.reset_mock()
+        mind = client.minds.create(update=True, **create_params)
+        # is not deleted
+        assert not mock_del.called
+
+        check_mind_created(mind, mock_put, create_params, f'/api/projects/mindsdb/minds/{mind_name}')
 
     @patch('requests.get')
     @patch('requests.patch')

@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 from minds.datasources.examples import example_ds
 
-from minds.exceptions import ObjectNotFound
+from minds.exceptions import ObjectNotFound, MindNameInvalid
 
 
 def get_client():
@@ -31,13 +31,14 @@ def test_datasources():
 
     # remove previous object
     try:
-        client.datasources.drop(example_ds.name)
+        client.datasources.drop(example_ds.name, force=True)
     except ObjectNotFound:
         ...
 
     # create
     ds = client.datasources.create(example_ds)
-    ds = client.datasources.create(example_ds, replace=True)
+    assert ds.name == example_ds.name
+    ds = client.datasources.create(example_ds, update=True)
     assert ds.name == example_ds.name
 
     # get
@@ -57,6 +58,7 @@ def test_minds():
     ds_name = 'test_datasource_'
     ds_name2 = 'test_datasource2_'
     mind_name = 'int_test_mind_'
+    invalid_mind_name = 'mind-123'
     mind_name2 = 'int_test_mind2_'
     prompt1 = 'answer in german'
     prompt2 = 'answer in spanish'
@@ -71,7 +73,7 @@ def test_minds():
     # prepare datasources
     ds_cfg = copy.copy(example_ds)
     ds_cfg.name = ds_name
-    ds = client.datasources.create(example_ds, replace=True)
+    ds = client.datasources.create(example_ds, update=True)
 
     # second datasource
     ds2_cfg = copy.copy(example_ds)
@@ -79,6 +81,13 @@ def test_minds():
     ds2_cfg.tables = ['home_rentals']
 
     # create
+    with pytest.raises(MindNameInvalid):
+        client.minds.create(
+            invalid_mind_name,
+            datasources=[ds],
+            provider='openai'
+        )
+    
     mind = client.minds.create(
         mind_name,
         datasources=[ds],
@@ -87,6 +96,12 @@ def test_minds():
     mind = client.minds.create(
         mind_name,
         replace=True,
+        datasources=[ds.name, ds2_cfg],
+        prompt_template=prompt1
+    )
+    mind = client.minds.create(
+        mind_name,
+        update=True,
         datasources=[ds.name, ds2_cfg],
         prompt_template=prompt1
     )
@@ -106,6 +121,14 @@ def test_minds():
         datasources=[ds.name],
         prompt_template=prompt2
     )
+    
+    with pytest.raises(MindNameInvalid):
+        mind.update(
+            name=invalid_mind_name,
+            datasources=[ds.name],
+            prompt_template=prompt2
+        )
+    
     with pytest.raises(ObjectNotFound):
         # this name not exists
         client.minds.get(mind_name)
@@ -153,3 +176,4 @@ def test_minds():
     client.minds.drop(mind_name2)
     client.datasources.drop(ds.name)
     client.datasources.drop(ds2_cfg.name)
+
