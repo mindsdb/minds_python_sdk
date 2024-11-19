@@ -8,8 +8,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from minds.datasources.examples import example_ds
+from minds.datasources import DatabaseConfig
 
-from minds.exceptions import ObjectNotFound, MindNameInvalid
+from minds.exceptions import ObjectNotFound, MindNameInvalid, DatasourceNameInvalid
 
 
 def get_client():
@@ -40,6 +41,14 @@ def test_datasources():
     assert ds.name == example_ds.name
     ds = client.datasources.create(example_ds, update=True)
     assert ds.name == example_ds.name
+
+    valid_ds_name = example_ds.name
+
+    with pytest.raises(DatasourceNameInvalid):
+        example_ds.name = "invalid-ds-name"
+        client.datasources.create(example_ds)
+
+    example_ds.name = valid_ds_name
 
     # get
     ds = client.datasources.get(example_ds.name)
