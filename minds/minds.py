@@ -3,6 +3,7 @@ from openai import OpenAI
 import minds.utils as utils
 import minds.exceptions as exc
 from minds.datasources import Datasource, DatabaseConfig
+from minds.knowledge_bases import KnowledgeBase, KnowledgeBaseConfig
 
 DEFAULT_PROMPT_TEMPLATE = 'Use your database tools to answer the user\'s question: {{question}}'
 
@@ -13,6 +14,7 @@ class Mind:
         provider=None,
         parameters=None,
         datasources=None,
+        knowledge_bases=None,
         created_at=None,
         updated_at=None,
         **kwargs
@@ -36,6 +38,7 @@ class Mind:
             base_url=base_url
         )
         self.datasources = datasources
+        self.knowledge_bases = knowledge_bases
 
     def __repr__(self):
         return (f'Mind(name={self.name}, '
@@ -44,6 +47,7 @@ class Mind:
                 f'created_at="{self.created_at}", '
                 f'updated_at="{self.updated_at}", '
                 f'parameters={self.parameters}, '
+                f'knowledge_bases={self.knowledge_bases}, '
                 f'datasources={self.datasources})')
 
     def update(
@@ -53,6 +57,7 @@ class Mind:
         provider=None,
         prompt_template=None,
         datasources=None,
+        knowledge_bases=None,
         parameters=None,
     ):
         """
@@ -65,11 +70,17 @@ class Mind:
          - Datasource object (minds.datasources.Database)
          - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
 
+        Knowledge base can be passed as
+         - name, str
+         - KnowledgeBase object (minds.knowledge_bases.KnowledgeBase)
+         - Knowledge base config (minds.knowledge_bases.KnowledgeBaseConfig), in this case knowledge base will be created
+
         :param name: new name of the mind, optional
         :param model_name: new llm model name, optional
         :param provider: new llm provider, optional
         :param prompt_template: new prompt template, optional
         :param datasources: alter list of datasources used by mind, optional
+        :param knowledge_bases: alter list of knowledge bases used by mind, optional
         :param parameters, dict: alter other parameters of the mind, optional
         """
         data = {}
@@ -83,6 +94,13 @@ class Mind:
                 ds = self.client.minds._check_datasource(ds)
                 ds_names.append(ds)
             data['datasources'] = ds_names
+
+        if knowledge_bases is not None:
+            kb_names = []
+            for kb in knowledge_bases:
+                kb = self.client.minds._check_knowledge_base(kb)
+                kb_names.append(kb)
+            data['knowledge_bases'] = kb_names
 
         if name is not None:
             data['name'] = name
@@ -148,6 +166,50 @@ class Mind:
         updated = self.client.minds.get(self.name)
 
         self.datasources = updated.datasources
+
+    def add_knowledge_base(self, knowledge_base: Union[str, KnowledgeBase, KnowledgeBaseConfig]):
+        """
+        Add knowledge base to mind
+        Knowledge base can be passed as
+         - name, str
+         - Knowledge base object (minds.knowledge_bases.KnowledgeBase)
+         - Knowledge base config (minds.knowledge_bases.KnowledgeBaseConfig), in this case knowledge base will be created
+
+        :param knowledge_base: input knowledge base
+        """
+
+        kb_name = self.client.minds._check_knowledge_base(knowledge_base)
+
+        self.api.post(
+            f'/projects/{self.project}/minds/{self.name}/knowledge_bases',
+            data={
+                'name': kb_name,
+            }
+        )
+        updated = self.client.minds.get(self.name)
+
+        self.knowledge_bases = updated.knowledge_bases
+
+    def del_knowledge_base(self, knowledge_base: Union[KnowledgeBase, str]):
+        """
+        Delete knowledge base from mind
+
+        Knowledge base can be passed as
+         - name, str
+         - KnowledgeBase object (minds.knowledge_bases.KnowledgeBase)
+
+        :param knowledge_base: Knowledge base to delete
+        """
+        if isinstance(knowledge_base, KnowledgeBase):
+            knowledge_base = knowledge_base.name
+        elif not isinstance(knowledge_base, str):
+            raise ValueError(f'Unknown type of knowledge base: {knowledge_base}')
+        self.api.delete(
+            f'/projects/{self.project}/minds/{self.name}/knowledge_bases/{knowledge_base}',
+        )
+        updated = self.client.minds.get(self.name)
+
+        self.knowledge_bases = updated.knowledge_bases
 
     def completion(self, message: str, stream: bool = False) -> Union[str, Iterable[object]]:
         """
@@ -221,12 +283,28 @@ class Minds:
             raise ValueError(f'Unknown type of datasource: {ds}')
         return ds
 
+    def _check_knowledge_base(self, knowledge_base) -> str:
+        if isinstance(knowledge_base, KnowledgeBase):
+            knowledge_base = knowledge_base.name
+        elif isinstance(knowledge_base, KnowledgeBaseConfig):
+            # if not exists - create
+            try:
+                self.client.knowledge_bases.get(knowledge_base.name)
+            except exc.ObjectNotFound:
+                self.client.knowledge_bases.create(knowledge_base)
+
+            knowledge_base = knowledge_base.name
+        elif not isinstance(knowledge_base, str):
+            raise ValueError(f'Unknown type of knowledge base: {knowledge_base}')
+        return knowledge_base
+
     def create(
         self, name,
         model_name=None,
         provider=None,
         prompt_template=None,
         datasources=None,
+        knowledge_bases=None,
         parameters=None,
         replace=False,
         update=False,
@@ -239,11 +317,17 @@ class Minds:
          - Datasource object (minds.datasources.Database)
          - datasource config (minds.datasources.DatabaseConfig), in this case datasource will be created
 
+        Knowledge base can be passed as
+         - name, str
+         - KnowledgeBase object (minds.knowledge_bases.KnowledgeBase)
+         - Knowledge base config (minds.knowledge_bases.KnowledgeBaseConfig), in this case knowledge base will be created
+
         :param name: name of the mind
         :param model_name: llm model name, optional
         :param provider: llm provider, optional
         :param prompt_template: instructions to llm, optional
         :param datasources: list of datasources used by mind, optional
+        :param knowledge_bases: alter list of knowledge bases used by mind, optional
         :param parameters, dict: other parameters of the mind, optional
         :param replace: if true - to remove existing mind, default is false
         :param update: if true - to update mind if exists, default is false
@@ -266,6 +350,12 @@ class Minds:
                 ds = self._check_datasource(ds)
 
                 ds_names.append(ds)
+
+        kb_names = []
+        if knowledge_bases:
+            for kb in knowledge_bases:
+                kb = self._check_knowledge_base(kb)
+                kb_names.append(kb)
 
         if parameters is None:
             parameters = {}
@@ -290,6 +380,7 @@ class Minds:
                 'provider': provider,
                 'parameters': parameters,
                 'datasources': ds_names,
+                'knowledge_bases': kb_names
             }
         )
         mind = self.get(name)
