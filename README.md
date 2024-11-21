@@ -151,5 +151,10 @@ client.datasources.drop('my_datasource')
 
 ### Other SDKs
 
-#### [C# SDK](https://github.com/priyanshuverma-dev/Minds.SDK)
-#### [Command-Line](https://github.com/Better-Boy/minds-cli-sdk)
+- [C# SDK](https://github.com/priyanshuverma-dev/Minds.SDK)
+- [Ruby-SDK](https://github.com/tungnt1203/minds_ruby_sdk)
+- [Dart-SDK](https://github.com/ArnavK-09/mdb_dart)
+
+#### Command Line Tools
+- [Minds CLI](https://github.com/Better-Boy/minds-cli-sdk)
+

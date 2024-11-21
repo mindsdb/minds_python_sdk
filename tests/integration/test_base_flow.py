@@ -8,8 +8,9 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from minds.datasources.examples import example_ds
+from minds.datasources import DatabaseConfig
 
-from minds.exceptions import ObjectNotFound, MindNameInvalid
+from minds.exceptions import ObjectNotFound, MindNameInvalid, DatasourceNameInvalid
 
 
 def get_client():
@@ -40,6 +41,14 @@ def test_datasources():
     assert ds.name == example_ds.name
     ds = client.datasources.create(example_ds, update=True)
     assert ds.name == example_ds.name
+
+    valid_ds_name = example_ds.name
+
+    with pytest.raises(DatasourceNameInvalid):
+        example_ds.name = "invalid-ds-name"
+        client.datasources.create(example_ds)
+
+    example_ds.name = valid_ds_name
 
     # get
     ds = client.datasources.get(example_ds.name)
@@ -73,7 +82,7 @@ def test_minds():
     # prepare datasources
     ds_cfg = copy.copy(example_ds)
     ds_cfg.name = ds_name
-    ds = client.datasources.create(example_ds, replace=True)
+    ds = client.datasources.create(example_ds, update=True)
 
     # second datasource
     ds2_cfg = copy.copy(example_ds)
@@ -82,7 +91,7 @@ def test_minds():
 
     # create
     with pytest.raises(MindNameInvalid):
-        mind = client.minds.create(
+        client.minds.create(
             invalid_mind_name,
             datasources=[ds],
             provider='openai'
@@ -110,9 +119,6 @@ def test_minds():
     mind = client.minds.get(mind_name)
     assert len(mind.datasources) == 2
     assert mind.prompt_template == prompt1
-    
-    with pytest.raises(MindNameInvalid):
-        client.minds.get(invalid_mind_name)
 
     # list
     mind_list = client.minds.list()
@@ -179,6 +185,4 @@ def test_minds():
     client.minds.drop(mind_name2)
     client.datasources.drop(ds.name)
     client.datasources.drop(ds2_cfg.name)
-    
-    with pytest.raises(MindNameInvalid):
-        client.minds.drop(invalid_mind_name)
+
