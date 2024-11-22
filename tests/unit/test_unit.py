@@ -130,7 +130,10 @@ class TestKnowledgeBases:
             name='test_kb',
             description='Test knowledge base',
             vector_store_config=test_vector_store_config,
-            embedding_config=test_embedding_config
+            embedding_config=test_embedding_config,
+            params={
+                'k1': 'v1'
+            }
         )
         response_mock(mock_get, test_knowledge_base_config.model_dump())
 
@@ -151,6 +154,9 @@ class TestKnowledgeBases:
             'embedding_model': {
                 'provider': test_embedding_config.provider,
                 'name': test_embedding_config.model,
+                'k1': 'v1'
+            },
+            'params': {
                 'k1': 'v1'
             }
         }
