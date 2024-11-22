@@ -18,3 +18,10 @@ class Unauthorized(Exception):
 class UnknownError(Exception):
     ...
 
+
+class MindNameInvalid(Exception):
+    ...
+
+
+class DatasourceNameInvalid(Exception):
+    ...

@@ -4,16 +4,20 @@ from unittest.mock import patch
 
 
 from minds.datasources.examples import example_ds
+from minds.knowledge_bases import EmbeddingConfig, KnowledgeBaseConfig, VectorStoreConfig
+
 
 def get_client():
     from minds.client import Client
     return Client(API_KEY)
 
+
 from minds import rest_api
 
 # patch _raise_for_status
 rest_api._raise_for_status = Mock()
-#
+
+
 def response_mock(mock, data):
     def side_effect(*args, **kwargs):
         r_mock = Mock()
@@ -36,29 +40,28 @@ class TestDatasources:
         assert ds1.tables == ds2.tables
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create_datasources(self, mock_del, mock_post, mock_get):
+    def test_create_datasources(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
         response_mock(mock_get, example_ds.model_dump())
 
         ds = client.datasources.create(example_ds)
-        def check_ds_created(ds, mock_post):
+
+        def check_ds_created(ds, mock_post, url):
             self._compare_ds(ds, example_ds)
             args, kwargs = mock_post.call_args
 
             assert kwargs['headers'] == {'Authorization': 'Bearer ' + API_KEY}
             assert kwargs['json'] == example_ds.model_dump()
-            assert args[0] == 'https://mdb.ai/api/datasources'
+            assert args[0] == url
 
-        check_ds_created(ds, mock_post)
+        check_ds_created(ds, mock_post, 'https://mdb.ai/api/datasources')
 
-        # with replace
-        ds = client.datasources.create(example_ds, replace=True)
-        args, _ = mock_del.call_args
-        assert args[0].endswith(f'/api/datasources/{example_ds.name}')
-
-        check_ds_created(ds, mock_post)
+        # with update
+        ds = client.datasources.create(example_ds, update=True)
+        check_ds_created(ds, mock_put, f'https://mdb.ai/api/datasources/{ds.name}')
 
     @patch('requests.get')
     def test_get_datasource(self, mock_get):
@@ -78,7 +81,7 @@ class TestDatasources:
         client.datasources.drop('ds_name')
 
         args, _ = mock_del.call_args
-        assert args[0].endswith(f'/api/datasources/ds_name')
+        assert args[0].endswith('/api/datasources/ds_name')
 
     @patch('requests.get')
     def test_list_datasources(self, mock_get):
@@ -91,7 +94,184 @@ class TestDatasources:
         self._compare_ds(ds, example_ds)
 
         args, _ = mock_get.call_args
-        assert args[0].endswith(f'/api/datasources')
+        assert args[0].endswith('/api/datasources')
+
+
+class TestKnowledgeBases:
+
+    def _compare_knowledge_base(self, knowledge_base, config):
+        assert knowledge_base.name == config.name
+
+    @patch('requests.get')
+    @patch('requests.post')
+    def test_create_knowledge_bases(self, mock_post, mock_get):
+        client = get_client()
+
+        test_embedding_config = EmbeddingConfig(
+            provider='openai',
+            model='gpt-4o',
+            params={
+                'k1': 'v1'
+            }
+        )
+        test_vector_store_connection_data = {
+            'user': 'test_user',
+            'password': 'test_password',
+            'host': 'boop.mindsdb.com',
+            'port': '5432',
+            'database': 'test',
+        }
+        test_vector_store_config = VectorStoreConfig(
+            engine='pgvector',
+            connection_data=test_vector_store_connection_data,
+            table='test_table'
+        )
+        test_knowledge_base_config = KnowledgeBaseConfig(
+            name='test_kb',
+            description='Test knowledge base',
+            vector_store_config=test_vector_store_config,
+            embedding_config=test_embedding_config,
+            params={
+                'k1': 'v1'
+            }
+        )
+        response_mock(mock_get, test_knowledge_base_config.model_dump())
+
+        created_knowledge_base = client.knowledge_bases.create(test_knowledge_base_config)
+        self._compare_knowledge_base(created_knowledge_base, test_knowledge_base_config)
+
+        args, kwargs = mock_post.call_args
+
+        assert kwargs['headers'] == {'Authorization': 'Bearer ' + API_KEY}
+
+        expected_create_request = {
+            'name': test_knowledge_base_config.name,
+            'description': test_knowledge_base_config.description,
+            'vector_store': {
+                'engine': test_vector_store_config.engine,
+                'connection_data': test_vector_store_config.connection_data
+            },
+            'embedding_model': {
+                'provider': test_embedding_config.provider,
+                'name': test_embedding_config.model,
+                'k1': 'v1'
+            },
+            'params': {
+                'k1': 'v1'
+            }
+        }
+
+        assert kwargs['json'] == expected_create_request
+        assert args[0] == 'https://mdb.ai/api/knowledge_bases'
+
+    @patch('requests.get')
+    def test_get_knowledge_base(self, mock_get):
+        client = get_client()
+
+        test_embedding_config = EmbeddingConfig(
+            provider='openai',
+            model='gpt-4o',
+            params={
+                'k1': 'v1'
+            }
+        )
+        test_vector_store_connection_data = {
+            "user": "test_user",
+            "password": "test_password",
+            "host": "boop.mindsdb.com",
+            "port": "5432",
+            "database": "test",
+        }
+        test_vector_store_config = VectorStoreConfig(
+            engine='pgvector',
+            connection_data=test_vector_store_connection_data,
+            table='test_table'
+        )
+        test_knowledge_base_config = KnowledgeBaseConfig(
+            name='test_kb',
+            description='Test knowledge base',
+            vector_store_config=test_vector_store_config,
+            embedding_config=test_embedding_config
+        )
+
+        # Expected response from MindsDB API server.
+        get_response = {
+            'created_at': '2024-11-15',
+            'embedding_model': 'test_kb_embeddings',
+            'id': 1,
+            'name': 'test_kb',
+            'params': {},
+            'project_id': 1,
+            'updated_at': '2024-11-15',
+            'vector_database': 'test_kb_vector_store',
+            'vector_database_table': 'test_table'
+        }
+        response_mock(mock_get, get_response)
+        get_knowledge_base = client.knowledge_bases.get(test_knowledge_base_config.name)
+        self._compare_knowledge_base(get_knowledge_base, test_knowledge_base_config)
+
+        args, _ = mock_get.call_args
+        assert args[0].endswith(f'/api/knowledge_bases/{test_knowledge_base_config.name}')
+
+    @patch('requests.delete')
+    def test_delete_knowledge_base(self, mock_del):
+        client = get_client()
+
+        client.knowledge_bases.drop('test_kb')
+
+        args, _ = mock_del.call_args
+        assert args[0].endswith('/api/knowledge_bases/test_kb')
+
+    @patch('requests.get')
+    def test_list_knowledge_bases(self, mock_get):
+        client = get_client()
+
+        test_embedding_config = EmbeddingConfig(
+            provider='openai',
+            model='gpt-4o',
+            params={
+                'k1': 'v1'
+            }
+        )
+        test_vector_store_connection_data = {
+            "user": "test_user",
+            "password": "test_password",
+            "host": "boop.mindsdb.com",
+            "port": "5432",
+            "database": "test",
+        }
+        test_vector_store_config = VectorStoreConfig(
+            engine='pgvector',
+            connection_data=test_vector_store_connection_data,
+            table='test_table'
+        )
+        test_knowledge_base_config = KnowledgeBaseConfig(
+            name='test_kb',
+            description='Test knowledge base',
+            vector_store_config=test_vector_store_config,
+            embedding_config=test_embedding_config
+        )
+
+        # Expected response from MindsDB API server.
+        get_response = {
+            'created_at': '2024-11-15',
+            'embedding_model': 'test_kb_embeddings',
+            'id': 1,
+            'name': 'test_kb',
+            'params': {},
+            'project_id': 1,
+            'updated_at': '2024-11-15',
+            'vector_database': 'test_kb_vector_store',
+            'vector_database_table': 'test_table'
+        }
+        response_mock(mock_get, [get_response])
+        knowledge_base_list = client.knowledge_bases.list()
+        assert len(knowledge_base_list) == 1
+        knowledge_base = knowledge_base_list[0]
+        self._compare_knowledge_base(knowledge_base, test_knowledge_base_config)
+
+        args, _ = mock_get.call_args
+        assert args[0].endswith('/api/knowledge_bases')
 
 
 class TestMinds:
@@ -100,6 +280,7 @@ class TestMinds:
         'model_name': 'gpt-4o',
         'name': 'test_mind',
         'datasources': ['example_ds'],
+        'knowledge_bases': ['example_kb'],
         'provider': 'openai',
         'parameters': {
             'prompt_template': "Answer the user's question"
@@ -115,37 +296,40 @@ class TestMinds:
         assert mind.parameters == mind_json['parameters']
 
     @patch('requests.get')
+    @patch('requests.put')
     @patch('requests.post')
     @patch('requests.delete')
-    def test_create(self, mock_del, mock_post, mock_get):
+    def test_create(self, mock_del, mock_post, mock_put, mock_get):
         client = get_client()
 
         mind_name = 'test_mind'
         prompt_template = 'always agree'
         datasources = ['my_ds']
+        knowledge_bases = ['example_kb']
         provider = 'openai'
 
         response_mock(mock_get, self.mind_json)
         create_params = {
             'name': mind_name,
             'prompt_template': prompt_template,
-            'datasources': datasources
+            'datasources': datasources,
+            'knowledge_bases': knowledge_bases
         }
         mind = client.minds.create(**create_params)
 
-        def check_mind_created(mind, mock_post, create_params):
+        def check_mind_created(mind, mock_post, create_params, url):
             args, kwargs = mock_post.call_args
-            assert args[0].endswith('/api/projects/mindsdb/minds')
+            assert args[0].endswith(url)
             request = kwargs['json']
-            for key in ('name', 'datasources', 'provider', 'model_name'),:
+            for key in ('name', 'datasources', 'knowledge_bases', 'provider', 'model_name'),:
                 assert request.get(key) == create_params.get(key)
             assert create_params.get('prompt_template') == request.get('parameters', {}).get('prompt_template')
 
             self.compare_mind(mind, self.mind_json)
 
-        check_mind_created(mind, mock_post, create_params)
+        check_mind_created(mind, mock_post, create_params, '/api/projects/mindsdb/minds')
 
-        # with replace
+        # -- with replace --
         create_params = {
             'name': mind_name,
             'prompt_template': prompt_template,
@@ -157,7 +341,15 @@ class TestMinds:
         args, _ = mock_del.call_args
         assert args[0].endswith(f'/api/projects/mindsdb/minds/{mind_name}')
 
-        check_mind_created(mind, mock_post, create_params)
+        check_mind_created(mind, mock_post, create_params, '/api/projects/mindsdb/minds')
+
+        # -- with update --
+        mock_del.reset_mock()
+        mind = client.minds.create(update=True, **create_params)
+        # is not deleted
+        assert not mock_del.called
+
+        check_mind_created(mind, mock_put, create_params, f'/api/projects/mindsdb/minds/{mind_name}')
 
     @patch('requests.get')
     @patch('requests.patch')
@@ -170,6 +362,7 @@ class TestMinds:
         update_params = dict(
             name='mind_name2',
             datasources=['ds_name'],
+            knowledge_bases=['kb_name'],
             provider='ollama',
             model_name='llama',
             parameters={
@@ -193,7 +386,7 @@ class TestMinds:
         self.compare_mind(mind, self.mind_json)
 
         args, _ = mock_get.call_args
-        assert args[0].endswith(f'/api/projects/mindsdb/minds/my_mind')
+        assert args[0].endswith('/api/projects/mindsdb/minds/my_mind')
 
     @patch('requests.get')
     def test_list(self, mock_get):
@@ -205,7 +398,7 @@ class TestMinds:
         self.compare_mind(minds_list[0], self.mind_json)
 
         args, _ = mock_get.call_args
-        assert args[0].endswith(f'/api/projects/mindsdb/minds')
+        assert args[0].endswith('/api/projects/mindsdb/minds')
 
     @patch('requests.delete')
     def test_delete(self, mock_del):
@@ -213,7 +406,7 @@ class TestMinds:
         client.minds.drop('my_name')
 
         args, _ = mock_del.call_args
-        assert args[0].endswith(f'/api/projects/mindsdb/minds/my_name')
+        assert args[0].endswith('/api/projects/mindsdb/minds/my_name')
 
     @patch('requests.get')
     @patch('minds.minds.OpenAI')
@@ -222,8 +415,6 @@ class TestMinds:
 
         response_mock(mock_get, self.mind_json)
         mind = client.minds.get('mind_name')
-
-        openai_response = 'how can I assist you today?'
 
         def openai_completion_f(messages, *args, **kwargs):
             # echo question
@@ -252,4 +443,3 @@ class TestMinds:
             if question == chunk.content.lower():
                 success = True
         assert success is True
-
