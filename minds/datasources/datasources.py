@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
-
+import minds.utils as utils
 import minds.exceptions as exc
 
 class DatabaseConfig(BaseModel):
@@ -37,8 +37,10 @@ class Datasources:
 
         name = ds_config.name
 
+        utils.validate_datasource_name(name)
+
         if update:
-            self.api.put('/datasources', data=ds_config.model_dump())
+            self.api.put(f'/datasources/{name}', data=ds_config.model_dump())
         else:
             self.api.post('/datasources', data=ds_config.model_dump())
         return self.get(name)
