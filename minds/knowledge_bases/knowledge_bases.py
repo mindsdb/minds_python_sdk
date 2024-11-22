@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
+from minds.knowledge_bases.preprocessing import PreprocessingConfig
 from minds.rest_api import RestAPI
 
 
@@ -25,6 +26,8 @@ class KnowledgeBaseConfig(BaseModel):
     description: str
     vector_store_config: Optional[VectorStoreConfig] = None
     embedding_config: Optional[EmbeddingConfig] = None
+    # Params to apply to retrieval pipeline.
+    params: Optional[Dict] = None
 
 
 class KnowledgeBaseDocument(BaseModel):
@@ -39,7 +42,7 @@ class KnowledgeBase:
         self.name = name
         self.api = api
 
-    def insert_from_select(self, query: str):
+    def insert_from_select(self, query: str, preprocessing_config: PreprocessingConfig = None):
         '''
         Inserts select content of a connected datasource into this knowledge base
 
@@ -48,9 +51,11 @@ class KnowledgeBase:
         update_request = {
             'query': query
         }
+        if preprocessing_config is not None:
+            update_request['preprocessing'] = preprocessing_config.model_dump()
         _ = self.api.put(f'/knowledge_bases/{self.name}', data=update_request)
 
-    def insert_documents(self, documents: List[KnowledgeBaseDocument]):
+    def insert_documents(self, documents: List[KnowledgeBaseDocument], preprocessing_config: PreprocessingConfig = None):
         '''
         Inserts documents directly into this knowledge base
 
@@ -59,9 +64,11 @@ class KnowledgeBase:
         update_request = {
             'rows': [d.model_dump() for d in documents]
         }
+        if preprocessing_config is not None:
+            update_request['preprocessing'] = preprocessing_config.model_dump()
         _ = self.api.put(f'/knowledge_bases/{self.name}', data=update_request)
 
-    def insert_urls(self, urls: List[str]):
+    def insert_urls(self, urls: List[str], preprocessing_config: PreprocessingConfig = None):
         '''
         Crawls URLs & inserts the retrieved webpages into this knowledge base
 
@@ -70,9 +77,11 @@ class KnowledgeBase:
         update_request = {
             'urls': urls
         }
+        if preprocessing_config is not None:
+            update_request['preprocessing'] = preprocessing_config.model_dump()
         _ = self.api.put(f'/knowledge_bases/{self.name}', data=update_request)
 
-    def insert_files(self, files: List[str]):
+    def insert_files(self, files: List[str], preprocessing_config: PreprocessingConfig = None):
         '''
         Inserts files that have already been uploaded to MindsDB into this knowledge base
 
@@ -81,6 +90,8 @@ class KnowledgeBase:
         update_request = {
             'files': files
         }
+        if preprocessing_config is not None:
+            update_request['preprocessing'] = preprocessing_config.model_dump()
         _ = self.api.put(f'/knowledge_bases/{self.name}', data=update_request)
 
 
@@ -117,6 +128,8 @@ class KnowledgeBases:
             if config.embedding_config.params is not None:
                 embedding_data.update(config.embedding_config.params)
             create_request['embedding_model'] = embedding_data
+        if config.params is not None:
+            create_request['params'] = config.params
 
         _ = self.api.post('/knowledge_bases', data=create_request)
         return self.get(config.name)
