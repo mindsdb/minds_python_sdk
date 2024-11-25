@@ -117,7 +117,8 @@ class KnowledgeBases:
         if config.vector_store_config is not None:
             vector_store_data = {
                 'engine': config.vector_store_config.engine,
-                'connection_data': config.vector_store_config.connection_data
+                'connection_data': config.vector_store_config.connection_data,
+                'table': config.vector_store_config.table
             }
             create_request['vector_store'] = vector_store_data
         if config.embedding_config is not None:
