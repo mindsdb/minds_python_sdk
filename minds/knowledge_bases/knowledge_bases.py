@@ -168,7 +168,7 @@ class KnowledgeBases:
         :param name: name of knowledge base
         :param force: if True - remove from all minds, default: False
         '''
-        data = None
+        data = {}
         if force:
             data = {'cascade': True}
 
