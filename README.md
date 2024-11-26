@@ -154,6 +154,7 @@ client.datasources.drop('my_datasource')
 - [Java-SDK](https://github.com/Better-Boy/minds-java-sdk)
 - [Ruby-SDK](https://github.com/tungnt1203/minds_ruby_sdk)
 - [Dart-SDK](https://github.com/ArnavK-09/mdb_dart)
+- [Javascript](https://github.com/scshiv29-dev/mindsbd_sdk_js)
 - [C# SDK](https://github.com/priyanshuverma-dev/Minds.SDK)
 - [Go SDK](https://github.com/Abiji-2020/minds-go-sdk)
 
