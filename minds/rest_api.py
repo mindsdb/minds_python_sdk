@@ -29,7 +29,7 @@ class RestAPI:
         self.base_url = base_url
 
     def _headers(self):
-        return {'Authorization': 'Bearer ' + self.api_key}
+        return {'Authorization': 'Bearer ' + self.api_key,  'Content-Type': 'application/json',}
 
     def get(self, url):
         resp = requests.get(self.base_url + url, headers=self._headers())
@@ -37,7 +37,7 @@ class RestAPI:
         _raise_for_status(resp)
         return resp
 
-    def delete(self, url, data=None):
+    def delete(self, url, data={}):
         resp = requests.delete(
             self.base_url + url,
             headers=self._headers(),
@@ -47,7 +47,7 @@ class RestAPI:
         _raise_for_status(resp)
         return resp
 
-    def post(self, url, data):
+    def post(self, url, data={}):
         resp = requests.post(
             self.base_url + url,
             headers=self._headers(),
@@ -57,7 +57,7 @@ class RestAPI:
         _raise_for_status(resp)
         return resp
 
-    def put(self, url, data):
+    def put(self, url, data={}):
         resp = requests.put(
             self.base_url + url,
             headers=self._headers(),
@@ -67,7 +67,7 @@ class RestAPI:
         _raise_for_status(resp)
         return resp
 
-    def patch(self, url, data):
+    def patch(self, url, data={}):
         resp = requests.patch(
             self.base_url + url,
             headers=self._headers(),
