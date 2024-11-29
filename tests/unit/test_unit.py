@@ -53,7 +53,7 @@ class TestDatasources:
             self._compare_ds(ds, example_ds)
             args, kwargs = mock_post.call_args
 
-            assert kwargs['headers'] == {'Authorization': 'Bearer ' + API_KEY}
+            assert kwargs['headers'] == {'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json'}
             assert kwargs['json'] == example_ds.model_dump()
             assert args[0] == url
 
@@ -142,14 +142,15 @@ class TestKnowledgeBases:
 
         args, kwargs = mock_post.call_args
 
-        assert kwargs['headers'] == {'Authorization': 'Bearer ' + API_KEY}
+        assert kwargs['headers'] == {'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json'}
 
         expected_create_request = {
             'name': test_knowledge_base_config.name,
             'description': test_knowledge_base_config.description,
             'vector_store': {
                 'engine': test_vector_store_config.engine,
-                'connection_data': test_vector_store_config.connection_data
+                'connection_data': test_vector_store_config.connection_data,
+                'table': test_vector_store_config.table
             },
             'embedding_model': {
                 'provider': test_embedding_config.provider,
@@ -443,3 +444,8 @@ class TestMinds:
             if question == chunk.content.lower():
                 success = True
         assert success is True
+
+
+if __name__ == '__main__':
+    import pytest
+    pytest.main()
