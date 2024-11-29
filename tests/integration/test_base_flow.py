@@ -69,8 +69,8 @@ def test_minds():
     mind_name = 'int_test_mind_'
     invalid_mind_name = 'mind-123'
     mind_name2 = 'int_test_mind2_'
-    prompt1 = 'answer in german'
-    prompt2 = 'answer in spanish'
+    prompt1 = 'answer in spanish'
+    prompt2 = 'you are data expert'
 
     # remove previous objects
     for name in (mind_name, mind_name2):
@@ -124,6 +124,10 @@ def test_minds():
     mind_list = client.minds.list()
     assert len(mind_list) > 0
 
+    # completion with prompt 1
+    answer = mind.completion('say hello')
+    assert 'hola' in answer.lower()
+
     # rename & update
     mind.update(
         name=mind_name2,
@@ -154,10 +158,6 @@ def test_minds():
     mind.del_datasource(ds2_cfg.name)
     assert len(mind.datasources) == 1
 
-    # completion
-    answer = mind.completion('say hello')
-    assert 'hola' in answer.lower()
-
     # ask about data
     answer = mind.completion('what is max rental price in home rental?')
     assert '5602' in answer.replace(' ', '').replace(',', '')
@@ -176,8 +176,8 @@ def test_minds():
 
     # stream completion
     success = False
-    for chunk in mind.completion('say hello', stream=True):
-        if 'hola' in chunk.content.lower():
+    for chunk in mind.completion('what is max rental price in home rental?', stream=True):
+        if '5602' in chunk.content.lower():
             success = True
     assert success is True
 
