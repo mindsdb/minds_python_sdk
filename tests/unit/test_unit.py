@@ -444,8 +444,3 @@ class TestMinds:
             if question == chunk.content.lower():
                 success = True
         assert success is True
-
-
-if __name__ == '__main__':
-    import pytest
-    pytest.main()
