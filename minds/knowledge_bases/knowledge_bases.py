@@ -26,6 +26,7 @@ class KnowledgeBaseConfig(BaseModel):
     description: str
     vector_store_config: Optional[VectorStoreConfig] = None
     embedding_config: Optional[EmbeddingConfig] = None
+    preprocessing_config: Optional[PreprocessingConfig] = None
     # Params to apply to retrieval pipeline.
     params: Optional[Dict] = None
 
@@ -129,6 +130,8 @@ class KnowledgeBases:
             if config.embedding_config.params is not None:
                 embedding_data.update(config.embedding_config.params)
             create_request['embedding_model'] = embedding_data
+        if config.preprocessing_config is not None:
+            create_request['preprocessing'] = config.preprocessing_config.model_dump()
         if config.params is not None:
             create_request['params'] = config.params
 
