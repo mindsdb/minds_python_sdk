@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from unittest.mock import patch
 
 
+from minds.datasources.datasources import DatabaseTables
 from minds.datasources.examples import example_ds
 from minds.knowledge_bases import EmbeddingConfig, KnowledgeBaseConfig, VectorStoreConfig
 
@@ -322,13 +323,58 @@ class TestMinds:
             args, kwargs = mock_post.call_args
             assert args[0].endswith(url)
             request = kwargs['json']
-            for key in ('name', 'datasources', 'knowledge_bases', 'provider', 'model_name'),:
-                assert request.get(key) == create_params.get(key)
+            for key in ('name', 'datasources', 'knowledge_bases', 'provider', 'model_name'):
+                req, param = request.get(key), create_params.get(key)
+                if key == 'datasources':
+                    param = [{'name': param[0]}]
+
+                assert req == param
+
             assert create_params.get('prompt_template') == request.get('parameters', {}).get('prompt_template')
 
             self.compare_mind(mind, self.mind_json)
 
         check_mind_created(mind, mock_post, create_params, '/api/projects/mindsdb/minds')
+
+        # -- datasource with tables --
+        knowledge_bases = ['example_kb']
+        provider = 'openai'
+
+        response_mock(mock_get, self.mind_json)
+
+        ds_conf = DatabaseTables(
+            name='my_db',
+            tables=['table1', 'table1'],
+        )
+        create_params = {
+            'name': mind_name,
+            'prompt_template': prompt_template,
+            'datasources': [ds_conf],
+            'knowledge_bases': knowledge_bases
+        }
+        mind = client.minds.create(**create_params)
+
+        def check_mind_created(mind, mock_post, create_params, url):
+            args, kwargs = mock_post.call_args
+            assert args[0].endswith(url)
+            request = kwargs['json']
+            for key in ('name', 'datasources', 'knowledge_bases', 'provider', 'model_name'):
+                req, param = request.get(key), create_params.get(key)
+                if key == 'datasources':
+                    if param is not None:
+                        ds = param[0]
+                        param = [{'name': ds.name, 'tables': ds.tables}]
+                    else:
+                        param = []
+                if key == 'knowledge_bases' and param is None:
+                    param = []
+                assert req == param
+            assert create_params.get('prompt_template') == request.get('parameters', {}).get('prompt_template')
+
+            self.compare_mind(mind, self.mind_json)
+
+        check_mind_created(mind, mock_post, create_params, '/api/projects/mindsdb/minds')
+
 
         # -- with replace --
         create_params = {
@@ -375,7 +421,9 @@ class TestMinds:
         args, kwargs = mock_patch.call_args
         assert args[0].endswith(f'/api/projects/mindsdb/minds/{self.mind_json["name"]}')
 
-        assert kwargs['json'] == update_params
+        params = update_params.copy()
+        params['datasources'] = [{'name': 'ds_name'}]
+        assert kwargs['json'] == params
 
     @patch('requests.get')
     def test_get(self, mock_get):

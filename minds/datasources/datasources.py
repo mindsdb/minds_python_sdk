@@ -4,16 +4,35 @@ from pydantic import BaseModel, Field
 import minds.utils as utils
 import minds.exceptions as exc
 
-class DatabaseConfig(BaseModel):
 
+class DatabaseConfigBase(BaseModel):
+    """
+    Base class
+    """
     name: str
-    engine: str
-    description: str
-    connection_data: Union[dict, None] = {}
     tables: Union[List[str], None] = []
 
 
+class DatabaseTables(DatabaseConfigBase):
+    """
+    Used when only database and tables are required to be defined. For example in minds.create
+    """
+    ...
+
+
+class DatabaseConfig(DatabaseConfigBase):
+    """
+    Used to define datasource before creating it.
+    """
+    engine: str
+    description: str
+    connection_data: Union[dict, None] = {}
+
+
 class Datasource(DatabaseConfig):
+    """
+    Existed datasource. It is returned by this SDK when datasource is queried from server
+    """
     ...
 
 

@@ -40,6 +40,11 @@ mind = client.minds.create(name='mind_name', datasources=[datasource] )
 # with prompt template
 mind = client.minds.create(name='mind_name', prompt_template='You are codding assistant')
 
+# restrict tables for datasource in context of the mind:
+from minds.datasources.datasources import DatabaseTables
+datasource = DatabaseTables(name='my_datasource', tables=['table1', 'table1'])
+mind = client.minds.create(name='mind_name', datasources=[datasource])
+
 # or add to existed mind
 mind = client.minds.create(name='mind_name')
 # by config

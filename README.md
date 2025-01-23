@@ -75,6 +75,17 @@ mind3.add_datasource(postgres_config)  # Using the config
 mind3.add_datasource(datasource)       # Using the data source object
 ```
 
+Create mind with tables restriction for datasource:
+```python
+from minds.datasources.datasources import DatabaseTables
+datasource = DatabaseTables(
+    name='my_db',
+    tables=['table1', 'table1'],
+)
+mind4 = client.minds.create(name='mind_name', datasources=[datasource])
+```
+
+
 ### Managing Minds
 
 You can create a mind or replace an existing one with the same name.
