@@ -2,7 +2,7 @@ from typing import List, Union, Iterable
 from openai import OpenAI
 import minds.utils as utils
 import minds.exceptions as exc
-from minds.datasources import Datasource, DatabaseConfig
+from minds.datasources import Datasource, DatabaseConfig, DatabaseTables, DatabaseConfigBase
 from minds.knowledge_bases import KnowledgeBase, KnowledgeBaseConfig
 
 DEFAULT_PROMPT_TEMPLATE = 'Use your database tools to answer the user\'s question: {{question}}'
@@ -89,11 +89,10 @@ class Mind:
             utils.validate_mind_name(name)
 
         if datasources is not None:
-            ds_names = []
+            ds_list = []
             for ds in datasources:
-                ds = self.client.minds._check_datasource(ds)
-                ds_names.append(ds)
-            data['datasources'] = ds_names
+                ds_list.append(self.client.minds._check_datasource(ds))
+            data['datasources'] = ds_list
 
         if knowledge_bases is not None:
             kb_names = []
@@ -145,7 +144,7 @@ class Mind:
         :param datasource: input datasource
         """
 
-        ds_name = self.client.minds._check_datasource(datasource)
+        ds_name = self.client.minds._check_datasource(datasource)['name']
 
         self.api.post(
             f'/projects/{self.project}/minds/{self.name}/datasources',
@@ -279,20 +278,28 @@ class Minds:
         item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
         return Mind(self.client, **item)
 
-    def _check_datasource(self, ds) -> str:
-        if isinstance(ds, Datasource):
-            ds = ds.name
-        elif isinstance(ds, DatabaseConfig):
-            # if not exists - create
-            try:
-                self.client.datasources.get(ds.name)
-            except exc.ObjectNotFound:
-                self.client.datasources.create(ds)
+    def _check_datasource(self, ds) -> dict:
+        if isinstance(ds, DatabaseConfigBase):
+            res = {'name': ds.name}
 
-            ds = ds.name
-        elif not isinstance(ds, str):
+            if isinstance(ds, DatabaseTables):
+                if ds.tables:
+                    res['tables'] = ds.tables
+
+            if isinstance(ds, DatabaseConfig):
+                # if not exists - create
+                try:
+                    self.client.datasources.get(ds.name)
+                except exc.ObjectNotFound:
+                    self.client.datasources.create(ds)
+
+        elif isinstance(ds, str):
+            res = {'name': ds}
+        else:
             raise ValueError(f'Unknown type of datasource: {ds}')
-        return ds
+
+        return res
+
 
     def _check_knowledge_base(self, knowledge_base) -> str:
         if isinstance(knowledge_base, KnowledgeBase):
@@ -355,12 +362,10 @@ class Minds:
             except exc.ObjectNotFound:
                 ...
 
-        ds_names = []
+        ds_list = []
         if datasources:
             for ds in datasources:
-                ds = self._check_datasource(ds)
-
-                ds_names.append(ds)
+                ds_list.append(self._check_datasource(ds))
 
         kb_names = []
         if knowledge_bases:
@@ -390,7 +395,7 @@ class Minds:
                 'model_name': model_name,
                 'provider': provider,
                 'parameters': parameters,
-                'datasources': ds_names,
+                'datasources': ds_list,
                 'knowledge_bases': kb_names
             }
         )

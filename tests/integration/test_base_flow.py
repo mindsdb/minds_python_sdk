@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 from minds.datasources.examples import example_ds
-from minds.datasources import DatabaseConfig
+from minds.datasources import DatabaseConfig, DatabaseTables
 
 from minds.exceptions import ObjectNotFound, MindNameInvalid, DatasourceNameInvalid
 
@@ -64,8 +64,8 @@ def test_datasources():
 def test_minds():
     client = get_client()
 
-    ds_name = 'test_datasource_'
-    ds_name2 = 'test_datasource2_'
+    ds_all_name = 'test_datasource_'  # unlimited tables
+    ds_rentals_name = 'test_datasource2_'  # limited to home rentals
     mind_name = 'int_test_mind_'
     invalid_mind_name = 'mind-123'
     mind_name2 = 'int_test_mind2_'
@@ -80,38 +80,38 @@ def test_minds():
             ...
 
     # prepare datasources
-    ds_cfg = copy.copy(example_ds)
-    ds_cfg.name = ds_name
-    ds = client.datasources.create(example_ds, update=True)
+    ds_all_cfg = copy.copy(example_ds)
+    ds_all_cfg.name = ds_all_name
+    ds_all = client.datasources.create(ds_all_cfg, update=True)
 
     # second datasource
-    ds2_cfg = copy.copy(example_ds)
-    ds2_cfg.name = ds_name2
-    ds2_cfg.tables = ['home_rentals']
+    ds_rentals_cfg = copy.copy(example_ds)
+    ds_rentals_cfg.name = ds_rentals_name
+    ds_rentals_cfg.tables = ['home_rentals']
 
     # create
     with pytest.raises(MindNameInvalid):
         client.minds.create(
             invalid_mind_name,
-            datasources=[ds],
+            datasources=[ds_all],
             provider='openai'
         )
     
     mind = client.minds.create(
         mind_name,
-        datasources=[ds],
+        datasources=[ds_all],
         provider='openai'
     )
     mind = client.minds.create(
         mind_name,
         replace=True,
-        datasources=[ds.name, ds2_cfg],
+        datasources=[ds_all.name, ds_rentals_cfg],
         prompt_template=prompt1
     )
     mind = client.minds.create(
         mind_name,
         update=True,
-        datasources=[ds.name, ds2_cfg],
+        datasources=[ds_all.name, ds_rentals_cfg],
         prompt_template=prompt1
     )
 
@@ -131,14 +131,14 @@ def test_minds():
     # rename & update
     mind.update(
         name=mind_name2,
-        datasources=[ds.name],
+        datasources=[ds_all.name],
         prompt_template=prompt2
     )
     
     with pytest.raises(MindNameInvalid):
         mind.update(
             name=invalid_mind_name,
-            datasources=[ds.name],
+            datasources=[ds_all.name],
             prompt_template=prompt2
         )
     
@@ -151,11 +151,11 @@ def test_minds():
     assert mind.prompt_template == prompt2
 
     # add datasource
-    mind.add_datasource(ds2_cfg)
+    mind.add_datasource(ds_rentals_cfg)
     assert len(mind.datasources) == 2
 
     # del datasource
-    mind.del_datasource(ds2_cfg.name)
+    mind.del_datasource(ds_rentals_cfg.name)
     assert len(mind.datasources) == 1
 
     # ask about data
@@ -163,16 +163,28 @@ def test_minds():
     assert '5602' in answer.replace(' ', '').replace(',', '')
 
     # limit tables
-    mind.del_datasource(ds.name)
-    mind.add_datasource(ds_name2)
+    mind.del_datasource(ds_all.name)
+    mind.add_datasource(ds_rentals_name)
     assert len(mind.datasources) == 1
 
-    answer = mind.completion('what is max rental price in home rental?')
-    assert '5602' in answer.replace(' ', '').replace(',', '')
+    check_mind_can_see_only_rentals(mind)
 
-    # not accessible table
-    answer = mind.completion('what is max price in car sales?')
-    assert '145000' not in answer.replace(' ', '').replace(',', '')
+    # test ds with limited tables
+    ds_all_limited = DatabaseTables(
+        name=ds_all_name,
+        tables=['home_rentals']
+    )
+    # mind = client.minds.create(
+    #     'mind_ds_limited_',
+    #     replace=True,
+    #     datasources=[ds_all],
+    #     prompt_template=prompt2
+    # )
+    mind.update(
+        name=mind.name,
+        datasources=[ds_all_limited],
+    )
+    check_mind_can_see_only_rentals(mind)
 
     # stream completion
     success = False
@@ -183,6 +195,13 @@ def test_minds():
 
     # drop
     client.minds.drop(mind_name2)
-    client.datasources.drop(ds.name)
-    client.datasources.drop(ds2_cfg.name)
+    client.datasources.drop(ds_all.name)
+    client.datasources.drop(ds_rentals_cfg.name)
 
+def check_mind_can_see_only_rentals(mind):
+    answer = mind.completion('what is max rental price in home rental?')
+    assert '5602' in answer.replace(' ', '').replace(',', '')
+
+    # not accessible table
+    answer = mind.completion('what is max price in car sales?')
+    assert '145000' not in answer.replace(' ', '').replace(',', '')
