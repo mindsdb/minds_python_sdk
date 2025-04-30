@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: mdb-dev
     strategy:
       matrix:
         python-version: ['3.10']
