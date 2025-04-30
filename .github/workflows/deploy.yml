@@ -10,7 +10,7 @@ jobs:
  #  Push a new release to PyPI
   deploy_to_pypi:
     name: Publish to PyPI
-    runs-on: ubuntu-latest
+    runs-on: mdb-dev
     if: github.actor != 'mindsdbadmin'
     steps:
       - uses: actions/checkout@v4
