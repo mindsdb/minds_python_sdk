@@ -27,5 +27,5 @@ jobs:
           pytest tests/integration --disable-warnings
         env:
           PYTHONPATH: ./
-          API_KEY: ${{ secrets.API_KEY }}
+          MINDS_API_KEY: ${{ secrets.MINDS_API_KEY }}
           BASE_URL: 'https://mdb.ai'
