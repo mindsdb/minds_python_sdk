@@ -10,12 +10,14 @@ jobs:
  #  Push a new release to PyPI
   deploy_to_pypi:
     name: Publish to PyPI
+    permissions:
+      contents: read
     runs-on: mdb-dev
     if: github.actor != 'mindsdbadmin'
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v5.1.0
+        uses: actions/setup-python@v5.6.0
         with:
           python-version: ${{ vars.CI_PYTHON_VERSION }}
       - name: Install dependencies
