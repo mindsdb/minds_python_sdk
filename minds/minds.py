@@ -17,6 +17,7 @@ class Mind:
         # knowledge_bases=None,
         created_at=None,
         updated_at=None,
+        status=None,
         **kwargs
     ):
         self.api = client.api
@@ -30,6 +31,7 @@ class Mind:
         self.updated_at = updated_at
         self.datasources = datasources
         # self.knowledge_bases = knowledge_bases
+        self.status = status
 
     def __repr__(self):
         return (f'Mind(name={self.name}, '
@@ -39,7 +41,8 @@ class Mind:
                 f'updated_at="{self.updated_at}", '
                 f'parameters={self.parameters}, '
                 # f'knowledge_bases={self.knowledge_bases}, '
-                f'datasources={self.datasources})')
+                f'datasources={self.datasources}, '
+                f'status={self.status})')
 
     def update(
         self,
