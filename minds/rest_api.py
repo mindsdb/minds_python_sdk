@@ -1,3 +1,4 @@
+import json
 import requests
 
 import minds.exceptions as exc
@@ -58,6 +59,29 @@ class RestAPI:
 
         _raise_for_status(resp)
         return resp
+
+    def post_stream(self, url, data={}):
+        """Makes a POST request and yields chunks as they arrive (OpenAI-style streaming)."""
+        with requests.post(
+            self.base_url + url,
+            headers=self._headers(),
+            json=data,
+            stream=True,
+        ) as resp:
+            _raise_for_status(resp)
+            for line in resp.iter_lines():
+                if not line:
+                    continue
+                decoded = line.decode("utf-8")
+                if decoded.startswith("data: "):
+                    payload = decoded[len("data: "):]
+                    if payload.strip() == "[DONE]":
+                        break
+                    try:
+                        obj = json.loads(payload)
+                        yield obj
+                    except json.JSONDecodeError:
+                        yield {"error": f"Failed to parse: {decoded}"}
 
     def put(self, url, data={}):
         resp = requests.put(
