@@ -25,7 +25,7 @@ class DatabaseConfig(DatabaseConfigBase):
     Used to define datasource before creating it.
     """
     engine: str
-    description: str
+    description: Union[str, None] = ''
     connection_data: Union[dict, None] = {}
 
 
