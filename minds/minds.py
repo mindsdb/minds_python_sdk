@@ -212,14 +212,14 @@ class Mind:
 
     #     self.knowledge_bases = updated.knowledge_bases
 
-    def completion(self, message: str, stream: bool = False) -> Union[str, Iterable[object]]:
+    def completion(self, message: str, stream: bool = False) -> Union[str, Iterable[str]]:
         """
         Call mind completion
 
         :param message: input question
         :param stream: to enable stream mode
 
-        :return: string if stream mode is off or iterator of ChoiceDelta objects (by openai)
+        :return: string if stream mode is off or a generator of strings if stream mode is on
         """
         if stream:
             response = self.api.post_stream(
