@@ -21,7 +21,6 @@ class Mind:
     ):
         self.api = client.api
         self.client = client
-        self.project = 'mindsdb'
         
         self.name = name
         self.model_name = model_name
@@ -116,7 +115,7 @@ class Mind:
             data['parameters']['prompt_template'] = prompt_template
 
         self.api.patch(
-            f'/projects/{self.project}/minds/{self.name}',
+            f'/minds/{self.name}',
             data=data
         )
 
@@ -252,8 +251,6 @@ class Minds:
         self.api = client.api
         self.client = client
 
-        self.project = 'mindsdb'
-
     def list(self) -> List[Mind]:
         """
         Returns list of minds
@@ -261,7 +258,7 @@ class Minds:
         :return: iterable
         """
 
-        data = self.api.get(f'/projects/{self.project}/minds').json()
+        data = self.api.get(f'/minds').json()
         minds_list = []
         for item in data:
             minds_list.append(Mind(self.client, **item))
@@ -275,7 +272,7 @@ class Minds:
         :return: a mind object
         """
         
-        item = self.api.get(f'/projects/{self.project}/minds/{name}').json()
+        item = self.api.get(f'/minds/{name}').json()
         return Mind(self.client, **item)
 
     def _check_datasource(self, ds) -> dict:
@@ -383,10 +380,10 @@ class Minds:
 
         if update:
             method = self.api.put
-            url = f'/projects/{self.project}/minds/{name}'
+            url = f'/minds/{name}'
         else:
             method = self.api.post
-            url = f'/projects/{self.project}/minds'
+            url = f'/minds'
 
         method(
             url,
@@ -410,4 +407,4 @@ class Minds:
        :param name: name of the mind
        """
 
-       self.api.delete(f'/projects/{self.project}/minds/{name}')
+       self.api.delete(f'/minds/{name}')
