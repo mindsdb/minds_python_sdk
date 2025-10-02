@@ -13,6 +13,6 @@ class Client:
         self.api = RestAPI(api_key, base_url, version)
 
         self.datasources = Datasources(self)
-        self.knowledge_bases = KnowledgeBases(self)
+        # self.knowledge_bases = KnowledgeBases(self)
 
         self.minds = Minds(self)
