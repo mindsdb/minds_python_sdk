@@ -19,7 +19,7 @@ def _raise_for_status(response):
 
 
 class RestAPI:
-    def __init__(self, api_key, base_url=None, version=None):
+    def __init__(self, api_key, base_url=None, version='v1'):
         if base_url is None:
             base_url = 'https://mdb.ai'
 

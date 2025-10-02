@@ -8,7 +8,7 @@ from minds.minds import Minds
 
 class Client:
 
-    def __init__(self, api_key, base_url=None, version=None):
+    def __init__(self, api_key, base_url=None, version='v1'):
 
         self.api = RestAPI(api_key, base_url, version)
 
