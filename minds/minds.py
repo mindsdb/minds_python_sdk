@@ -1,15 +1,15 @@
 from typing import List, Union, Iterable
-from openai import OpenAI
 import minds.utils as utils
 import minds.exceptions as exc
 from minds.datasources import Datasource, DatabaseConfig, DatabaseTables, DatabaseConfigBase
 from minds.knowledge_bases import KnowledgeBase, KnowledgeBaseConfig
 
-DEFAULT_PROMPT_TEMPLATE = 'Use your database tools to answer the user\'s question: {{question}}'
 
 class Mind:
     def __init__(
-        self, client, name,
+        self,
+        client,
+        name,
         model_name=None,
         provider=None,
         parameters=None,
@@ -25,17 +25,9 @@ class Mind:
         self.name = name
         self.model_name = model_name
         self.provider = provider
-        if parameters is None:
-            parameters = {}
-        self.prompt_template = parameters.pop('prompt_template', None)
-        self.parameters = parameters
+        self.parameters = parameters if parameters is not None else {}
         self.created_at = created_at
         self.updated_at = updated_at
-        base_url = utils.get_openai_base_url(self.api.base_url)
-        self.openai_client = OpenAI(
-            api_key=self.api.api_key,
-            base_url=base_url
-        )
         self.datasources = datasources
         self.knowledge_bases = knowledge_bases
 
@@ -54,7 +46,6 @@ class Mind:
         name: str = None,
         model_name: str = None,
         provider=None,
-        prompt_template=None,
         datasources=None,
         knowledge_bases=None,
         parameters=None,
@@ -77,7 +68,6 @@ class Mind:
         :param name: new name of the mind, optional
         :param model_name: new llm model name, optional
         :param provider: new llm provider, optional
-        :param prompt_template: new prompt template, optional
         :param datasources: alter list of datasources used by mind, optional
         :param knowledge_bases: alter list of knowledge bases used by mind, optional
         :param parameters, dict: alter other parameters of the mind, optional
@@ -106,15 +96,10 @@ class Mind:
             data['model_name'] = model_name
         if provider is not None:
             data['provider'] = provider
-        if parameters is None:
-            parameters = {}
+        if parameters is not None:
+            data['parameters'] = parameters
 
-        data['parameters'] = parameters
-
-        if prompt_template is not None:
-            data['parameters']['prompt_template'] = prompt_template
-
-        self.api.patch(
+        self.api.put(
             f'/minds/{self.name}',
             data=data
         )
@@ -125,12 +110,11 @@ class Mind:
         refreshed_mind = self.client.minds.get(self.name)
         self.model_name = refreshed_mind.model_name
         self.provider = refreshed_mind.provider
-        self.prompt_template = refreshed_mind.prompt_template
         self.parameters = refreshed_mind.parameters
         self.created_at = refreshed_mind.created_at
         self.updated_at = refreshed_mind.updated_at
         self.datasources = refreshed_mind.datasources
-
+        self.knowledge_bases = refreshed_mind.knowledge_bases
 
     def add_datasource(self, datasource: Datasource):
         """
@@ -142,13 +126,13 @@ class Mind:
 
         :param datasource: input datasource
         """
-
         ds_name = self.client.minds._check_datasource(datasource)['name']
+        existing_datasources = self.datasources or []
 
-        self.api.post(
-            f'/projects/{self.project}/minds/{self.name}/datasources',
+        self.api.put(
+            f'/minds/{self.name}',
             data={
-                'name': ds_name,
+                'datasources': existing_datasources + [{'name': ds_name}]
             }
         )
         updated = self.client.minds.get(self.name)
@@ -169,8 +153,16 @@ class Mind:
             datasource = datasource.name
         elif not isinstance(datasource, str):
             raise ValueError(f'Unknown type of datasource: {datasource}')
-        self.api.delete(
-            f'/projects/{self.project}/minds/{self.name}/datasources/{datasource}',
+
+        updated_datasources = [ds for ds in (self.datasources or []) if ds['name'] != datasource]
+        if len(updated_datasources) == len(self.datasources or []):
+            raise exc.ObjectNotFound(f'Datasource {datasource} not found in mind {self.name}')
+        
+        self.api.put(
+            f'/minds/{self.name}',
+            data={
+                'datasources': updated_datasources
+            }
         )
         updated = self.client.minds.get(self.name)
 
@@ -229,21 +221,34 @@ class Mind:
 
         :return: string if stream mode is off or iterator of ChoiceDelta objects (by openai)
         """
-        response = self.openai_client.chat.completions.create(
-            model=self.name,
-            messages=[
-                {'role': 'user', 'content': message}
-            ],
-            stream=stream
-        )
         if stream:
+            response = self.api.post_stream(
+                '/chat/completions',
+                data={
+                    'model': self.name,
+                    'messages': [
+                        {'role': 'user', 'content': message}
+                    ],
+                    'stream': stream
+                }
+            )
             return self._stream_response(response)
         else:
-            return response.choices[0].message.content
+            response = self.api.post(
+                '/chat/completions',
+                data={
+                    'model': self.name,
+                    'messages': [
+                        {'role': 'user', 'content': message}
+                    ],
+                    'stream': stream
+                }
+            )
+            return response.json()['choices'][0]['message']['content']
 
     def _stream_response(self, response):
         for chunk in response:
-            yield chunk.choices[0].delta
+            yield chunk['choices'][0]['delta']['content']
 
 
 class Minds:
@@ -297,7 +302,6 @@ class Minds:
 
         return res
 
-
     def _check_knowledge_base(self, knowledge_base) -> str:
         if isinstance(knowledge_base, KnowledgeBase):
             knowledge_base = knowledge_base.name
@@ -314,10 +318,10 @@ class Minds:
         return knowledge_base
 
     def create(
-        self, name,
+        self,
+        name,
         model_name=None,
         provider=None,
-        prompt_template=None,
         datasources=None,
         knowledge_bases=None,
         parameters=None,
@@ -340,7 +344,6 @@ class Minds:
         :param name: name of the mind
         :param model_name: llm model name, optional
         :param provider: llm provider, optional
-        :param prompt_template: instructions to llm, optional
         :param datasources: list of datasources used by mind, optional
         :param knowledge_bases: alter list of knowledge bases used by mind, optional
         :param parameters, dict: other parameters of the mind, optional
@@ -370,14 +373,6 @@ class Minds:
                 kb = self._check_knowledge_base(kb)
                 kb_names.append(kb)
 
-        if parameters is None:
-            parameters = {}
-
-        if prompt_template is not None:
-            parameters['prompt_template'] = prompt_template
-        if 'prompt_template' not in parameters:
-            parameters['prompt_template'] = DEFAULT_PROMPT_TEMPLATE
-
         if update:
             method = self.api.put
             url = f'/minds/{name}'
@@ -385,16 +380,20 @@ class Minds:
             method = self.api.post
             url = f'/minds'
 
+        data = {
+            'name': name,
+            'model_name': model_name,
+            'provider': provider,
+            'datasources': ds_list,
+        }
+        if parameters:
+            data['parameters'] = parameters
+        if kb_names:
+            data['knowledge_bases'] = kb_names
+
         method(
             url,
-            data={
-                'name': name,
-                'model_name': model_name,
-                'provider': provider,
-                'parameters': parameters,
-                'datasources': ds_list,
-                'knowledge_bases': kb_names
-            }
+            data=data
         )
         mind = self.get(name)
 
