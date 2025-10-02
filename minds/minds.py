@@ -14,7 +14,7 @@ class Mind:
         provider=None,
         parameters=None,
         datasources=None,
-        knowledge_bases=None,
+        # knowledge_bases=None,
         created_at=None,
         updated_at=None,
         **kwargs
@@ -29,7 +29,7 @@ class Mind:
         self.created_at = created_at
         self.updated_at = updated_at
         self.datasources = datasources
-        self.knowledge_bases = knowledge_bases
+        # self.knowledge_bases = knowledge_bases
 
     def __repr__(self):
         return (f'Mind(name={self.name}, '
@@ -38,7 +38,7 @@ class Mind:
                 f'created_at="{self.created_at}", '
                 f'updated_at="{self.updated_at}", '
                 f'parameters={self.parameters}, '
-                f'knowledge_bases={self.knowledge_bases}, '
+                # f'knowledge_bases={self.knowledge_bases}, '
                 f'datasources={self.datasources})')
 
     def update(
@@ -47,7 +47,7 @@ class Mind:
         model_name: str = None,
         provider=None,
         datasources=None,
-        knowledge_bases=None,
+        # knowledge_bases=None,
         parameters=None,
     ):
         """
@@ -83,12 +83,12 @@ class Mind:
                 ds_list.append(self.client.minds._check_datasource(ds))
             data['datasources'] = ds_list
 
-        if knowledge_bases is not None:
-            kb_names = []
-            for kb in knowledge_bases:
-                kb = self.client.minds._check_knowledge_base(kb)
-                kb_names.append(kb)
-            data['knowledge_bases'] = kb_names
+        # if knowledge_bases is not None:
+        #     kb_names = []
+        #     for kb in knowledge_bases:
+        #         kb = self.client.minds._check_knowledge_base(kb)
+        #         kb_names.append(kb)
+        #     data['knowledge_bases'] = kb_names
 
         if name is not None:
             data['name'] = name
@@ -114,7 +114,7 @@ class Mind:
         self.created_at = refreshed_mind.created_at
         self.updated_at = refreshed_mind.updated_at
         self.datasources = refreshed_mind.datasources
-        self.knowledge_bases = refreshed_mind.knowledge_bases
+        # self.knowledge_bases = refreshed_mind.knowledge_bases
 
     def add_datasource(self, datasource: Datasource):
         """
@@ -168,49 +168,49 @@ class Mind:
 
         self.datasources = updated.datasources
 
-    def add_knowledge_base(self, knowledge_base: Union[str, KnowledgeBase, KnowledgeBaseConfig]):
-        """
-        Add knowledge base to mind
-        Knowledge base can be passed as
-         - name, str
-         - Knowledge base object (minds.knowledge_bases.KnowledgeBase)
-         - Knowledge base config (minds.knowledge_bases.KnowledgeBaseConfig), in this case knowledge base will be created
+    # def add_knowledge_base(self, knowledge_base: Union[str, KnowledgeBase, KnowledgeBaseConfig]):
+    #     """
+    #     Add knowledge base to mind
+    #     Knowledge base can be passed as
+    #      - name, str
+    #      - Knowledge base object (minds.knowledge_bases.KnowledgeBase)
+    #      - Knowledge base config (minds.knowledge_bases.KnowledgeBaseConfig), in this case knowledge base will be created
 
-        :param knowledge_base: input knowledge base
-        """
+    #     :param knowledge_base: input knowledge base
+    #     """
 
-        kb_name = self.client.minds._check_knowledge_base(knowledge_base)
+    #     kb_name = self.client.minds._check_knowledge_base(knowledge_base)
 
-        self.api.post(
-            f'/projects/{self.project}/minds/{self.name}/knowledge_bases',
-            data={
-                'name': kb_name,
-            }
-        )
-        updated = self.client.minds.get(self.name)
+    #     self.api.post(
+    #         f'/projects/{self.project}/minds/{self.name}/knowledge_bases',
+    #         data={
+    #             'name': kb_name,
+    #         }
+    #     )
+    #     updated = self.client.minds.get(self.name)
 
-        self.knowledge_bases = updated.knowledge_bases
+    #     self.knowledge_bases = updated.knowledge_bases
 
-    def del_knowledge_base(self, knowledge_base: Union[KnowledgeBase, str]):
-        """
-        Delete knowledge base from mind
+    # def del_knowledge_base(self, knowledge_base: Union[KnowledgeBase, str]):
+    #     """
+    #     Delete knowledge base from mind
 
-        Knowledge base can be passed as
-         - name, str
-         - KnowledgeBase object (minds.knowledge_bases.KnowledgeBase)
+    #     Knowledge base can be passed as
+    #      - name, str
+    #      - KnowledgeBase object (minds.knowledge_bases.KnowledgeBase)
 
-        :param knowledge_base: Knowledge base to delete
-        """
-        if isinstance(knowledge_base, KnowledgeBase):
-            knowledge_base = knowledge_base.name
-        elif not isinstance(knowledge_base, str):
-            raise ValueError(f'Unknown type of knowledge base: {knowledge_base}')
-        self.api.delete(
-            f'/projects/{self.project}/minds/{self.name}/knowledge_bases/{knowledge_base}',
-        )
-        updated = self.client.minds.get(self.name)
+    #     :param knowledge_base: Knowledge base to delete
+    #     """
+    #     if isinstance(knowledge_base, KnowledgeBase):
+    #         knowledge_base = knowledge_base.name
+    #     elif not isinstance(knowledge_base, str):
+    #         raise ValueError(f'Unknown type of knowledge base: {knowledge_base}')
+    #     self.api.delete(
+    #         f'/projects/{self.project}/minds/{self.name}/knowledge_bases/{knowledge_base}',
+    #     )
+    #     updated = self.client.minds.get(self.name)
 
-        self.knowledge_bases = updated.knowledge_bases
+    #     self.knowledge_bases = updated.knowledge_bases
 
     def completion(self, message: str, stream: bool = False) -> Union[str, Iterable[object]]:
         """
@@ -302,20 +302,20 @@ class Minds:
 
         return res
 
-    def _check_knowledge_base(self, knowledge_base) -> str:
-        if isinstance(knowledge_base, KnowledgeBase):
-            knowledge_base = knowledge_base.name
-        elif isinstance(knowledge_base, KnowledgeBaseConfig):
-            # if not exists - create
-            try:
-                self.client.knowledge_bases.get(knowledge_base.name)
-            except exc.ObjectNotFound:
-                self.client.knowledge_bases.create(knowledge_base)
+    # def _check_knowledge_base(self, knowledge_base) -> str:
+    #     if isinstance(knowledge_base, KnowledgeBase):
+    #         knowledge_base = knowledge_base.name
+    #     elif isinstance(knowledge_base, KnowledgeBaseConfig):
+    #         # if not exists - create
+    #         try:
+    #             self.client.knowledge_bases.get(knowledge_base.name)
+    #         except exc.ObjectNotFound:
+    #             self.client.knowledge_bases.create(knowledge_base)
 
-            knowledge_base = knowledge_base.name
-        elif not isinstance(knowledge_base, str):
-            raise ValueError(f'Unknown type of knowledge base: {knowledge_base}')
-        return knowledge_base
+    #         knowledge_base = knowledge_base.name
+    #     elif not isinstance(knowledge_base, str):
+    #         raise ValueError(f'Unknown type of knowledge base: {knowledge_base}')
+    #     return knowledge_base
 
     def create(
         self,
@@ -323,7 +323,7 @@ class Minds:
         model_name=None,
         provider=None,
         datasources=None,
-        knowledge_bases=None,
+        # knowledge_bases=None,
         parameters=None,
         replace=False,
         update=False,
@@ -367,11 +367,11 @@ class Minds:
             for ds in datasources:
                 ds_list.append(self._check_datasource(ds))
 
-        kb_names = []
-        if knowledge_bases:
-            for kb in knowledge_bases:
-                kb = self._check_knowledge_base(kb)
-                kb_names.append(kb)
+        # kb_names = []
+        # if knowledge_bases:
+        #     for kb in knowledge_bases:
+        #         kb = self._check_knowledge_base(kb)
+        #         kb_names.append(kb)
 
         if update:
             method = self.api.put
@@ -388,8 +388,8 @@ class Minds:
         }
         if parameters:
             data['parameters'] = parameters
-        if kb_names:
-            data['knowledge_bases'] = kb_names
+        # if kb_names:
+        #     data['knowledge_bases'] = kb_names
 
         method(
             url,
