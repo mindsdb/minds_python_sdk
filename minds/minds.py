@@ -222,36 +222,23 @@ class Mind:
         :param message: input question
         :param stream: to enable stream mode
 
-        :return: string if stream mode is off or a generator of strings if stream mode is on
+        :return: string if stream mode is off or iterator of strings if stream mode is on
         """
+        response = self.openai_client.chat.completions.create(
+            model=self.name,
+            messages=[
+                {'role': 'user', 'content': message}
+            ],
+            stream=stream
+        )
         if stream:
-            response = self.api.post_stream(
-                '/chat/completions',
-                data={
-                    'model': self.name,
-                    'messages': [
-                        {'role': 'user', 'content': message}
-                    ],
-                    'stream': stream
-                }
-            )
             return self._stream_response(response)
         else:
-            response = self.api.post(
-                '/chat/completions',
-                data={
-                    'model': self.name,
-                    'messages': [
-                        {'role': 'user', 'content': message}
-                    ],
-                    'stream': stream
-                }
-            )
-            return response.json()['choices'][0]['message']['content']
+            return response.choices[0].message.content
 
     def _stream_response(self, response):
         for chunk in response:
-            yield chunk['choices'][0]['delta']['content']
+            yield chunk.choices[0].delta.content
 
 
 class Minds:
