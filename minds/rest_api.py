@@ -24,9 +24,9 @@ class RestAPI:
             base_url = 'https://mdb.ai'
 
         base_url = base_url.rstrip('/')
-        if not base_url.endswith('/api'):
+        if not base_url.endswith('/api') and not base_url.endswith(f'/api/{version}'):
             base_url = base_url + '/api'
-        if version is not None:
+        if version and not base_url.endswith(f'/api/{version}'):
             base_url = base_url + '/' + version.lstrip('/')
         self.api_key = api_key
         self.base_url = base_url
