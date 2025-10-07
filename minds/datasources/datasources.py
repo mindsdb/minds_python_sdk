@@ -1,67 +1,63 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import minds.utils as utils
 import minds.exceptions as exc
 
 
-class DatabaseConfigBase(BaseModel):
-    """
-    Base class
-    """
-    name: str
-    tables: Union[List[str], None] = []
-
-
-class DatabaseTables(DatabaseConfigBase):
-    """
-    Used when only database and tables are required to be defined. For example in minds.create
-    """
-    ...
-
-
-class DatabaseConfig(DatabaseConfigBase):
-    """
-    Used to define datasource before creating it.
-    """
-    engine: str
-    description: Union[str, None] = ''
-    connection_data: Union[dict, None] = {}
-
-
-class Datasource(DatabaseConfig):
+class Datasource(BaseModel):
     """
     Existed datasource. It is returned by this SDK when datasource is queried from server
     """
-    ...
+    name: str
+    engine: str
+    description: Optional[str] = None
+    connection_data: Optional[dict] = None
 
 
 class Datasources:
     def __init__(self, client):
         self.api = client.api
 
-    def create(self, ds_config: DatabaseConfig, update=False):
+    def create(
+        self,
+        name: str,
+        engine: str,
+        description: Optional[str] = None,
+        connection_data: Optional[dict] = None,
+        replace: bool = False,
+    ):
         """
-        Create new datasource and return it
+        Create new datasource.
 
-        :param ds_config: datasource configuration, properties:
-           - name: str, name of datatasource
-           - engine: str, type of database handler, for example 'postgres', 'mysql', ...
-           - description: str, description of the database. Used by mind to know what data can be got from it.
-           - connection_data: dict, optional, credentials to connect to database
-           - tables: list of str, optional, list of allowed tables
-        :param update: if true - to update datasourse if exists, default is false
-        :return: datasource object
+        :param name: name of datasource.
+        :param engine: type of database handler, for example 'postgres', 'mysql', ...
+        :param description: str, optional, description of the database. Used by mind to know what data can be got from it.
+        :param connection_data: dict, optional, credentials to connect to database.
+        :return: Datasource object.
         """
-
-        name = ds_config.name
-
         utils.validate_datasource_name(name)
 
-        if update:
-            self.api.put(f'/datasources/{name}', data=ds_config.model_dump())
-        else:
-            self.api.post('/datasources', data=ds_config.model_dump())
+        if replace:
+            try:
+                self.get(name)
+                self.drop(name)
+            except exc.ObjectNotFound:
+                ...
+
+        data = {
+            'name': name,
+            'engine': engine,
+        }
+        if connection_data is not None:
+            data['connection_data'] = connection_data
+        if description is not None:
+            data['description'] = description
+
+        self.api.post(
+            '/datasources',
+            data=data
+        )
         return self.get(name)
 
     def list(self) -> List[Datasource]:
@@ -74,9 +70,6 @@ class Datasources:
         data = self.api.get('/datasources').json()
         ds_list = []
         for item in data:
-            # TODO skip not sql skills
-            if item.get('engine') is None:
-                continue
             ds_list.append(Datasource(**item))
         return ds_list
 
@@ -89,21 +82,12 @@ class Datasources:
         """
 
         data = self.api.get(f'/datasources/{name}').json()
-
-        # TODO skip not sql skills
-        if data.get('engine') is None:
-            raise exc.ObjectNotSupported(f'Wrong type of datasource: {name}')
         return Datasource(**data)
 
-    def drop(self, name: str, force=False):
+    def drop(self, name: str):
         """
         Drop datasource by name
 
         :param name: name of datasource
-        :param force: if True - remove from all minds, default: False
         """
-        data = None
-        if force:
-            data = {'cascade': True}
-
-        self.api.delete(f'/datasources/{name}', data=data)
+        self.api.delete(f'/datasources/{name}')
