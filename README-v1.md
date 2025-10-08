@@ -1,11 +1,17 @@
-# Minds SDK
+# Minds Legacy SDK (v1.x)
+
+> **⚠️ API Version Notice**
+> 
+> This documentation applies **only** to users connecting to the **legacy Minds Demo environment** at https://demo.mdb.ai.
+> 
+> For users of the **current Minds Cloud environments**, please refer to the main README.md file in this repository.
 
 ### Installation
 
 To install the SDK, use pip:
 
 ```bash
-pip install minds-sdk
+pip install minds-sdk==1.3.3
 ```
 
 ### Getting Started
