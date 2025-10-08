@@ -1,24 +1,25 @@
 from openai import OpenAI
 from typing import Dict, List, Optional, Union, Iterable
 
-import minds.utils as utils
+from minds.client import Client
 import minds.exceptions as exc
+import minds.utils as utils
 # from minds.knowledge_bases import KnowledgeBase, KnowledgeBaseConfig
 
 
 class Mind:
     def __init__(
         self,
-        client,
-        name,
-        model_name=None,
-        provider=None,
-        parameters=None,
-        datasources=None,
+        client: Client,
+        name: str,
+        model_name: str,
+        provider: str,
         # knowledge_bases=None,
-        created_at=None,
-        updated_at=None,
-        status=None,
+        created_at: str,
+        updated_at: str,
+        status: str,
+        datasources: Optional[List[Dict]] = [],
+        parameters: Optional[Dict] = {},
         **kwargs
     ):
         self.api = client.api
@@ -153,7 +154,7 @@ class Mind:
 
 
 class Minds:
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.api = client.api
         self.client = client
 

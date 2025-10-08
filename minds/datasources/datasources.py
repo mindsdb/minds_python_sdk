@@ -1,8 +1,10 @@
 from typing import List, Optional
 
 from pydantic import BaseModel
-import minds.utils as utils
+
+from minds.client import Client
 import minds.exceptions as exc
+import minds.utils as utils
 
 
 class Datasource(BaseModel):
@@ -16,7 +18,7 @@ class Datasource(BaseModel):
 
 
 class Datasources:
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.api = client.api
 
     def create(
