@@ -54,11 +54,11 @@ class Datasources:
         if description is not None:
             data['description'] = description
 
-        self.api.post(
+        response = self.api.post(
             '/datasources',
             data=data
         )
-        return self.get(name)
+        return Datasource(**response.json())
 
     def list(self) -> List[Datasource]:
         """
