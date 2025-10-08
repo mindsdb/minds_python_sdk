@@ -59,6 +59,40 @@ class Datasources:
             data=data
         )
         return Datasource(**response.json())
+    
+    def update(
+        self,
+        name: str,
+        new_name: Optional[str] = None,
+        description: Optional[str] = None,
+        connection_data: Optional[dict] = None,
+    ):
+        """
+        Update existing datasource.
+
+        :param name: name of datasource to update.
+        :param new_name: new name of datasource.
+        :param description: str, optional, description of the database. Used by mind to know what data can be got from it.
+        :param connection_data: dict, optional, credentials to connect to database.
+        :return: Datasource object.
+        """
+        utils.validate_datasource_name(name)
+        if new_name is not None:
+            utils.validate_datasource_name(new_name)
+
+        data = {}
+        if new_name is not None:
+            data['name'] = new_name
+        if connection_data is not None:
+            data['connection_data'] = connection_data
+        if description is not None:
+            data['description'] = description
+
+        response = self.api.put(
+            f'/datasources/{name}',
+            data=data
+        )
+        return Datasource(**response.json())
 
     def list(self) -> List[Datasource]:
         """
