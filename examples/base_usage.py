@@ -1,5 +1,8 @@
-from minds.client import Client
+import time
+
 from openai import OpenAI
+
+from minds.client import Client
 
 
 # Basic Setup and Workflow
@@ -43,8 +46,25 @@ mind = client.minds.create(
 mind = client.minds.create(name='mind_name')
 mind.add_datasource(datasource.name, tables=['house_sales'])
 
+# wait until Mind is ready
+def wait_for_mind(mind):
+	status = mind.status
+	while status != 'COMPLETED':
+		print(f'Mind status: {status}')
+		time.sleep(3)
+		mind = client.minds.get(mind.name)
+		status = mind.status
+	
+		if status == 'FAILED':
+			raise Exception('Mind creation failed')
+
+	print('Mind creation successful!')
+ 
+wait_for_mind(mind)
+
 # chat with the Mind using the OpenAI-compatible Completions API (without streaming)
 openai_client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+
 completion = openai_client.chat.completions.create(
     model=mind.name,
     messages=[
@@ -63,7 +83,7 @@ completion_stream = openai_client.chat.completions.create(
 	stream=True
 )
 for chunk in completion_stream:
-	print(chunk.choices[0].delta)
+	print(chunk.choices[0].delta.content)
 
 # or chat with the Mind directly (without streaming)
 response = mind.completion('How many three-bedroom houses were sold in 2008?')
@@ -82,11 +102,12 @@ mind = client.minds.create(
     datasources=[
 		{
 			'name': datasource.name,
-			'tables': ['house_sales']
+			'tables': ['home_rentals']
 		}
 	],
     replace=True
 )
+wait_for_mind(mind)
 
 # update
 mind = client.minds.update(
@@ -99,6 +120,7 @@ mind = client.minds.update(
 		}
 	],
 )
+wait_for_mind(mind)
 
 # list
 minds = client.minds.list()
