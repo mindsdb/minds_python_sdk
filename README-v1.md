@@ -2,9 +2,12 @@
 
 > **⚠️ API Version Notice**
 > 
-> This documentation applies **only** to users connecting to the **legacy Minds Demo environment** at https://demo.mdb.ai.
+> This documentation applies to the **legacy SDK version** used for connecting to the **Minds Demo environment** at https://demo.mdb.ai.
 > 
-> For users of the **current Minds Cloud environments**, please refer to the main README.md file in this repository.
+> For users of the **current Minds Cloud environments**, please refer to the [main documentation](README.md) for compatibility.
+>
+> **Legacy Version**: v1.x (For Minds Demo environment)  
+> **Current Version**: v2.x+ ([Current Documentation](README.md))
 
 ### Installation
 
