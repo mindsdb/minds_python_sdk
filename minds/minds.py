@@ -1,22 +1,24 @@
 from openai import OpenAI
-from typing import Dict, List, Optional, Union, Iterable
+from typing import Dict, List, Optional, Union, Iterable, TYPE_CHECKING
 
-from minds.client import Client
 import minds.exceptions as exc
 import minds.utils as utils
 # from minds.knowledge_bases import KnowledgeBase, KnowledgeBaseConfig
+
+if TYPE_CHECKING:
+    from minds.client import Client
 
 
 class Mind:
     def __init__(
         self,
-        client: Client,
+        client: 'Client',
         name: str,
         model_name: str,
         provider: str,
         # knowledge_bases=None,
         created_at: str,
-        updated_at: str,
+        modified_at: str,
         status: str,
         datasources: Optional[List[Dict]] = [],
         parameters: Optional[Dict] = {},
@@ -30,7 +32,7 @@ class Mind:
         self.provider = provider
         self.parameters = parameters if parameters is not None else {}
         self.created_at = created_at
-        self.updated_at = updated_at
+        self.modified_at = modified_at
         self.datasources = datasources
         # self.knowledge_bases = knowledge_bases
         self.status = status
@@ -40,7 +42,7 @@ class Mind:
                 f'model_name={self.model_name}, '
                 f'provider={self.provider}, '
                 f'created_at="{self.created_at}", '
-                f'updated_at="{self.updated_at}", '
+                f'modified_at="{self.modified_at}", '
                 f'parameters={self.parameters}, '
                 # f'knowledge_bases={self.knowledge_bases}, '
                 f'datasources={self.datasources}, '
@@ -154,7 +156,7 @@ class Mind:
 
 
 class Minds:
-    def __init__(self, client: Client):
+    def __init__(self, client: 'Client'):
         self.api = client.api
         self.client = client
 
@@ -243,10 +245,12 @@ class Minds:
 
         data = {
             'name': name,
-            'model_name': model_name,
-            'provider': provider,
             'datasources': datasources or [],
         }
+        if model_name:
+            data['model_name'] = model_name
+        if provider:
+            data['provider'] = provider
         if parameters:
             data['parameters'] = parameters
         # if kb_names:

@@ -1,10 +1,12 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from minds.client import Client
 import minds.exceptions as exc
 import minds.utils as utils
+
+if TYPE_CHECKING:
+    from minds.client import Client
 
 
 class Datasource(BaseModel):
@@ -15,10 +17,12 @@ class Datasource(BaseModel):
     engine: str
     description: Optional[str] = None
     connection_data: Optional[dict] = None
+    created_at: str
+    modified_at: str
 
 
 class Datasources:
-    def __init__(self, client: Client):
+    def __init__(self, client: 'Client'):
         self.api = client.api
 
     def create(
