@@ -1,5 +1,14 @@
 # Minds SDK
 
+> **⚠️ API Version Notice**
+>
+> This documentation reflects the **current SDK version**, compatible with the **latest Minds Cloud API**.
+>
+> For users of the **legacy Minds Demo environment** at https://demo.mdb.ai, please refer to the [legacy documentation](README-v1.md) for compatibility.
+>
+> **Current Version**: v2.x+ (New API for Minds Cloud environments)  
+> **Legacy Version**: v1.x ([Legacy Documentation](README-v1.md))
+
 ### Installation
 
 To install the SDK, use pip:
@@ -10,32 +19,208 @@ pip install minds-sdk
 
 ### Getting Started
 
-1. Initialize the Client
+#### 1. Initialize the Client
 
 To get started, you'll need to initialize the Client with your API key. If you're using a different server, you can also specify a custom base URL.
 
 ```python
 from minds.client import Client
 
-# Default connection to Minds Cloud that uses 'https://mdb.ai' as the base URL
-client = Client("YOUR_API_KEY")
+# Default connection to Minds Cloud
+API_KEY = "YOUR_API_KEY"
+client = Client(API_KEY)
 
-# If you have self-hosted Minds Cloud instance, use your custom base URL
-base_url = 'https://<custom_cloud>.mdb.ai/'
-client = Client("YOUR_API_KEY", base_url)
+# Or with custom base URL
+BASE_URL = 'https://custom_cloud.mdb.ai/api/v1'
+client = Client(API_KEY, base_url=BASE_URL)
 ```
 
-2. Creating a Data Source
+#### 2. Creating a Datasource
 
-You can connect to various databases, such as PostgreSQL, by configuring your data source. Use the DatabaseConfig to define the connection details for your data source.
+Create a datasource to connect to your database:
 
 ```python
-
-from minds.datasources import DatabaseConfig
-
-postgres_config = DatabaseConfig(
+# Create datasource
+datasource = client.datasources.create(
     name='my_datasource',
-    description='<DESCRIPTION-OF-YOUR-DATA>',
+    description='House sales data',
+    engine='postgres',
+    connection_data={
+        'user': 'demo_user',
+        'password': 'demo_password',
+        'host': 'samples.mindsdb.com',
+        'port': 5432,
+        'database': 'demo',
+        'schema': 'demo_data'
+    }
+)
+```
+
+#### 3. Creating a Mind
+
+Create a mind and associate it with your datasource:
+
+```python
+# Create mind with datasource
+mind = client.minds.create(
+    name='mind_name',
+    datasources=[
+        {
+            'name': datasource.name,
+            'tables': ['house_sales']
+        }
+    ]
+)
+
+# Or add datasource to existing mind
+mind = client.minds.create(name='mind_name')
+mind.add_datasource(datasource.name, tables=['house_sales'])
+```
+
+#### 4. Wait for Mind to be Ready
+
+Before using your mind, wait for it to complete processing:
+
+```python
+import time
+
+def wait_for_mind(mind):
+    status = mind.status
+    while status != 'COMPLETED':
+        print(f'Mind status: {status}')
+        time.sleep(3)
+        mind = client.minds.get(mind.name)
+        status = mind.status
+    
+        if status == 'FAILED':
+            raise Exception('Mind creation failed')
+
+    print('Mind creation successful!')
+ 
+wait_for_mind(mind)
+```
+
+### Using Your Mind
+
+#### Chat with OpenAI-Compatible API
+
+You can use the OpenAI client to interact with your minds:
+
+```python
+from openai import OpenAI
+
+# Initialize OpenAI client
+openai_client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+
+# Chat without streaming
+completion = openai_client.chat.completions.create(
+    model=mind.name,
+    messages=[
+        {'role': 'user', 'content': 'How many three-bedroom houses were sold in 2008?'}
+    ],
+    stream=False
+)
+print(completion.choices[0].message.content)
+
+# Chat with streaming
+completion_stream = openai_client.chat.completions.create(
+    model=mind.name,
+    messages=[
+        {'role': 'user', 'content': 'How many three-bedroom houses were sold in 2008?'}
+    ],
+    stream=True
+)
+for chunk in completion_stream:
+    print(chunk.choices[0].delta.content)
+```
+
+#### Direct Mind Completion
+
+You can also interact directly with the mind:
+
+```python
+# Without streaming
+response = mind.completion('How many three-bedroom houses were sold in 2008?')
+print(response)
+
+# With streaming
+for chunk in mind.completion('How many three-bedroom houses were sold in 2008?', stream=True):
+    print(chunk)
+```
+
+### Managing Minds
+
+#### Create or Replace
+
+Create a new mind or replace an existing one:
+
+```python
+mind = client.minds.create(
+    name='mind_name',
+    datasources=[
+        {
+            'name': datasource.name,
+            'tables': ['home_rentals']
+        }
+    ],
+    replace=True
+)
+wait_for_mind(mind)
+```
+
+#### Update Mind
+
+Update an existing mind:
+
+```python
+mind = client.minds.update(
+    name='mind_name',  # required
+    new_name='new_mind_name',  # optional
+    datasources=[  # optional
+        {
+            'name': datasource.name,
+            'tables': ['home_rentals']
+        }
+    ],
+)
+wait_for_mind(mind)
+```
+
+#### List Minds
+
+Get all your minds:
+
+```python
+minds = client.minds.list()
+print(minds)
+```
+
+#### Get Mind by Name
+
+Retrieve a specific mind:
+
+```python
+mind = client.minds.get('mind_name')
+```
+
+#### Remove Mind
+
+Delete a mind:
+
+```python
+client.minds.drop('mind_name')
+```
+
+### Managing Datasources
+
+#### Create or Replace
+
+Create a new datasource or replace an existing one:
+
+```python
+datasource = client.datasources.create(
+    name='my_datasource',
+    description='House sales data',
     engine='postgres',
     connection_data={
         'user': 'demo_user',
@@ -45,130 +230,51 @@ postgres_config = DatabaseConfig(
         'database': 'demo',
         'schema': 'demo_data'
     },
-    tables=['<TABLE-1>', '<TABLE-2>']
+    replace=True
 )
 ```
 
-3. Creating a Mind
+#### Update Datasource
 
-You can create a `mind` and associate it with a data source.
-
-```python
-
-# Create a mind with a data source
-mind = client.minds.create(name='mind_name', datasources=[postgres_config])
-
-# Alternatively, create a data source separately and add it to a mind later
-datasource = client.datasources.create(postgres_config)
-mind2 = client.minds.create(name='mind_name', datasources=[datasource])
-```
-
-You can also add a data source to an existing mind:
+Update an existing datasource:
 
 ```python
-
-# Create a mind without a data source
-mind3 = client.minds.create(name='mind_name')
-
-# Add a data source to the mind
-mind3.add_datasource(postgres_config)  # Using the config
-mind3.add_datasource(datasource)       # Using the data source object
-```
-
-Create mind with tables restriction for datasource:
-```python
-from minds.datasources.datasources import DatabaseTables
-datasource = DatabaseTables(
-    name='my_db',
-    tables=['table1', 'table1'],
-)
-mind4 = client.minds.create(name='mind_name', datasources=[datasource])
-```
-
-
-### Managing Minds
-
-You can create a mind or replace an existing one with the same name.
-
-```python
-
-mind = client.minds.create(name='mind_name', replace=True, datasources=[postgres_config])
-```
-
-To update a mind, specify the new name and data sources. The provided data sources will replace the existing ones.
-
-```python
-
-mind.update(
-    name='mind_name',
-    datasources=[postgres_config]
+datasource = client.datasources.update(
+    name='my_datasource',
+    new_name='updated_datasource',
+    description='Updated House sales data',
+    connection_data={
+        'user': 'demo_user',
+        'password': 'demo_password',
+        'host': 'samples.mindsdb.com',
+        'port': 5432,
+        'database': 'demo',
+        'schema': 'demo_data'
+    }
 )
 ```
 
-#### List Minds
+#### List Datasources
 
-You can list all the minds you’ve created.
+Get all your datasources:
 
 ```python
-
-print(client.minds.list())
+datasources = client.datasources.list()
+print(datasources)
 ```
 
-#### Get a Mind by Name
+#### Get Datasource by Name
 
-You can fetch details of a mind by its name.
-
-```python
-
-mind = client.minds.get('mind_name')
-```
-
-#### Remove a Mind
-
-To delete a mind, use the following command:
+Retrieve a specific datasource:
 
 ```python
-
-client.minds.drop('mind_name')
-```
-
-### Managing Data Sources
-
-To view all data sources:
-
-```python
-
-print(client.datasources.list())
-```
-
-#### Get a Data Source by Name
-
-You can fetch details of a specific data source by its name.
-
-```python
-
 datasource = client.datasources.get('my_datasource')
 ```
 
-#### Remove a Data Source
+#### Remove Datasource
 
-To delete a data source, use the following command:
+Delete a datasource:
 
 ```python
-
 client.datasources.drop('my_datasource')
 ```
->Note: The SDK currently does not support automatically removing a data source if it is no longer connected to any mind.
-
-### Community Supported SDKs
-
-- [Java-SDK](https://github.com/Better-Boy/minds-java-sdk)
-- [Ruby-SDK](https://github.com/tungnt1203/minds_ruby_sdk)
-- [Dart-SDK](https://github.com/ArnavK-09/mdb_dart)
-- [Javascript](https://github.com/scshiv29-dev/mindsbd_sdk_js)
-- [C# SDK](https://github.com/priyanshuverma-dev/Minds.SDK)
-- [Go SDK](https://github.com/Abiji-2020/minds-go-sdk)
-
-#### Command Line Tools
-- [Minds CLI](https://github.com/Better-Boy/minds-cli-sdk)
-
