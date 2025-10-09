@@ -1,3 +1,4 @@
+import json
 import requests
 
 import minds.exceptions as exc
@@ -18,13 +19,15 @@ def _raise_for_status(response):
 
 
 class RestAPI:
-    def __init__(self, api_key, base_url=None):
+    def __init__(self, api_key, base_url=None, version='v1'):
         if base_url is None:
             base_url = 'https://mdb.ai'
 
         base_url = base_url.rstrip('/')
-        if not base_url.endswith('/api'):
+        if not base_url.endswith('/api') and not base_url.endswith(f'/api/{version}'):
             base_url = base_url + '/api'
+        if version and not base_url.endswith(f'/api/{version}'):
+            base_url = base_url + '/' + version.lstrip('/')
         self.api_key = api_key
         self.base_url = base_url
 

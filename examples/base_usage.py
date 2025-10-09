@@ -1,19 +1,142 @@
+import time
+
+from openai import OpenAI
+
 from minds.client import Client
 
-# --- connect ---
-client = Client("YOUR_API_KEY")
 
-# or use not default server
-base_url = 'https://custom_cloud.mdb.ai/'
-client = Client("YOUR_API_KEY", base_url)
+# Basic Setup and Workflow
 
+# connect
+API_KEY = "YOUR_API_KEY"
+BASE_URL = 'https://custom_cloud.mdb.ai/api/v1'  # optional, if you use custom server
 
-# create datasource
-from minds.datasources import DatabaseConfig
+client = Client(API_KEY)
 
-postgres_config = DatabaseConfig(
+# or with custom base URL
+client = Client(API_KEY, base_url=BASE_URL)
+
+# create Datasource
+datasource = client.datasources.create(
     name='my_datasource',
-	description='<DESCRIPTION-OF-YOUR-DATA>',
+	description='House sales data',
+	engine='postgres',
+	connection_data={
+    	'user': 'demo_user',
+    	'password': 'demo_password',
+    	'host': 'samples.mindsdb.com',
+    	'port': 5432,
+    	'database': 'demo',
+    	'schema': 'demo_data'
+	}
+)
+
+# create Mind
+mind = client.minds.create(
+    name='mind_name',
+    datasources=[
+		{
+			'name': datasource.name,
+			'tables': ['house_sales']
+		}
+	]
+)
+
+# or add to existing Mind
+mind = client.minds.create(name='mind_name')
+mind.add_datasource(datasource.name, tables=['house_sales'])
+
+# wait until Mind is ready
+def wait_for_mind(mind):
+	status = mind.status
+	while status != 'COMPLETED':
+		print(f'Mind status: {status}')
+		time.sleep(3)
+		mind = client.minds.get(mind.name)
+		status = mind.status
+	
+		if status == 'FAILED':
+			raise Exception('Mind creation failed')
+
+	print('Mind creation successful!')
+ 
+wait_for_mind(mind)
+
+# chat with the Mind using the OpenAI-compatible Completions API (without streaming)
+openai_client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+
+completion = openai_client.chat.completions.create(
+    model=mind.name,
+    messages=[
+        {'role': 'user', 'content': 'How many three-bedroom houses were sold in 2008?'}
+    ],
+    stream=False
+)
+print(completion.choices[0].message.content)
+
+# with streaming
+completion_stream = openai_client.chat.completions.create(
+	model=mind.name,
+	messages=[
+		{'role': 'user', 'content': 'How many three-bedroom houses were sold in 2008?'}
+	],
+	stream=True
+)
+for chunk in completion_stream:
+	print(chunk.choices[0].delta.content)
+
+# or chat with the Mind directly (without streaming)
+response = mind.completion('How many three-bedroom houses were sold in 2008?')
+print(response)
+
+# with streaming
+for chunk in mind.completion('How many three-bedroom houses were sold in 2008?', stream=True):
+	print(chunk)
+
+
+# Mind Management
+
+# create or replace
+mind = client.minds.create(
+    name='mind_name',
+    datasources=[
+		{
+			'name': datasource.name,
+			'tables': ['home_rentals']
+		}
+	],
+    replace=True
+)
+wait_for_mind(mind)
+
+# update
+mind = client.minds.update(
+	name='mind_name', # required
+	new_name='new_mind_name', # optional
+	datasources=[  # optional
+		{
+			'name': datasource.name,
+			'tables': ['home_rentals']
+		}
+	],
+)
+wait_for_mind(mind)
+
+# list
+minds = client.minds.list()
+
+# get
+mind = client.minds.get('mind_name')
+
+# remove
+client.minds.drop('mind_name')
+
+# Datasource Management
+
+# create or replace
+datasource = client.datasources.create(
+    name='my_datasource',
+	description='House sales data',
 	engine='postgres',
 	connection_data={
     	'user': 'demo_user',
@@ -23,79 +146,29 @@ postgres_config = DatabaseConfig(
     	'database': 'demo',
     	'schema': 'demo_data'
 	},
-	tables=['<TABLE-1>', '<TABLE-2>']
+    replace=True
 )
-
-# using sample config
-from minds.datasources.examples import example_ds
-
-# create mind
-# with datasource at the same time
-mind = client.minds.create(name='mind_name', datasources=[postgres_config] )
-
-# or separately
-datasource = client.datasources.create(postgres_config)
-mind = client.minds.create(name='mind_name', datasources=[datasource] )
-
-# with prompt template
-mind = client.minds.create(name='mind_name', prompt_template='You are codding assistant')
-
-# restrict tables for datasource in context of the mind:
-from minds.datasources.datasources import DatabaseTables
-datasource = DatabaseTables(name='my_datasource', tables=['table1', 'table1'])
-mind = client.minds.create(name='mind_name', datasources=[datasource])
-
-# or add to existed mind
-mind = client.minds.create(name='mind_name')
-# by config
-mind.add_datasource(postgres_config)
-# or by datasource
-mind.add_datasource(datasource)
-
-
-# --- managing minds ---
-
-# create or replace
-mind = client.minds.create(name='mind_name', replace=True, datasources=[postgres_config] )
 
 # update
-mind.update(
-	name='mind_name', # is required
-	datasources=[postgres_config]  # it will replace current datasource list
+datasource = client.datasources.update(
+    name='my_datasource',
+    new_name='updated_datasource',
+    description='Updated House sales data',
+    connection_data={
+        'user': 'demo_user',
+        'password': 'demo_password',
+        'host': 'samples.mindsdb.com',
+        'port': 5432,
+        'database': 'demo',
+        'schema': 'demo_data'
+    }
 )
 
 # list
-print(client.minds.list())
-
-# get by name
-mind = client.minds.get('mind_name')
-
-# removing datasource
-mind.del_datasource(datasource)
-
-# remove mind
-client.minds.drop('mind_name')
-
-# call completion
-print(mind.completion('2+3'))
-
-# stream completion
-for chunk in mind.completion('2+3', stream=True):
-	print(chunk.content)
-
-# --- managing datasources ---
-
-# create or replace
-datasource = client.datasources.create(postgres_config, replace=True)
-
-
-# list
-print(client.datasources.list())
+datasources = client.datasources.list()
 
 # get
 datasource = client.datasources.get('my_datasource')
 
 # remove
 client.datasources.drop('my_datasource')
-
-
