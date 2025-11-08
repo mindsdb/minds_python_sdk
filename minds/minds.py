@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Union, Iterable, TYPE_CHECKING
 
 import minds.exceptions as exc
 import minds.utils as utils
-# from minds.knowledge_bases import KnowledgeBase, KnowledgeBaseConfig
+
 
 if TYPE_CHECKING:
     from minds.client import Client

@@ -2,7 +2,6 @@
 from minds.rest_api import RestAPI
 
 from minds.datasources import Datasources
-from minds.knowledge_bases import KnowledgeBases
 from minds.minds import Minds, OSMinds
 
 
