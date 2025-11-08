@@ -8,6 +8,40 @@ import minds.utils as utils
 if TYPE_CHECKING:
     from minds.client import Client
 
+# we have an open source version of the MindsDB Server, so we need to have a class for it
+# it has the same abstraction that Minds and Mind, but we adjust accordingly
+class OSMind:
+    def __init__(
+        self,
+        client: 'Client',
+        name: str = None,
+        model_name: str = None,
+        provider: str = None,
+        created_at: str = None,
+        modified_at: str = None,
+        status: str = None,
+        datasources: Optional[List[Dict]] = None,
+        parameters: Optional[Dict] = None,
+        **kwargs
+    ):
+        pass
+
+    def __repr__(self):
+        pass
+
+    def add_datasource(self, datasource_name: str, tables: Optional[List[str]] = None) -> None:
+        pass
+    def remove_datasource(self, datasource_name: str) -> None:
+        pass
+
+    def completion(self, prompt: str, **kwargs) -> str:
+        pass
+
+    def _stream_response(self, prompt: str, **kwargs) -> Iterable[str]:
+        pass
+
+
+
 
 class Mind:
     def __init__(
@@ -154,6 +188,32 @@ class Mind:
         for chunk in response:
             yield chunk.choices[0].delta.content
 
+class OSMinds:
+    def __init__(self, client: 'Client'):
+        self.api = client.api
+        self.client = client
+
+    def list(self):
+        pass
+
+    def get(self, name: str):
+        pass
+
+    def create(
+        self,
+        name: str,
+        model_name: Optional[str] = None,
+        provider: Optional[str] = None,
+        datasources: Optional[List[Dict[str, Union[str, List[str]]]]] = None,
+        parameters=None,
+    ):
+        pass
+
+    def delete(self, name: str):
+        pass
+
+    def update(self, name: str, **kwargs):
+        pass
 
 class Minds:
     def __init__(self, client: 'Client'):

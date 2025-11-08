@@ -19,9 +19,12 @@ def _raise_for_status(response):
 
 
 class RestAPI:
-    def __init__(self, api_key, base_url=None, version='v1'):
+    def __init__(self, api_key=None, base_url=None, version='v1'):
         if base_url is None:
             base_url = 'https://mdb.ai'
+
+        if version == 'os':
+            version = None # ok, we don't add version to the base url on the open source server
 
         base_url = base_url.rstrip('/')
         if not base_url.endswith('/api') and not base_url.endswith(f'/api/{version}'):
@@ -32,7 +35,10 @@ class RestAPI:
         self.base_url = base_url
 
     def _headers(self):
-        return {'Authorization': 'Bearer ' + self.api_key,  'Content-Type': 'application/json',}
+        headers = {'Content-Type': 'application/json'}
+        if self.api_key is not None:
+            headers['Authorization'] = 'Bearer ' + self.api_key
+        return headers
 
     def get(self, url):
         resp = requests.get(self.base_url + url, headers=self._headers())
