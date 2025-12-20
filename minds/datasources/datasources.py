@@ -3,7 +3,6 @@ from typing import List, Optional, TYPE_CHECKING
 from pydantic import BaseModel
 
 import minds.exceptions as exc
-import minds.utils as utils
 
 if TYPE_CHECKING:
     from minds.client import Client
@@ -42,8 +41,6 @@ class Datasources:
         :param connection_data: dict, optional, credentials to connect to database.
         :return: Datasource object.
         """
-        utils.validate_datasource_name(name)
-
         if replace:
             try:
                 self.get(name)
@@ -82,10 +79,6 @@ class Datasources:
         :param connection_data: dict, optional, credentials to connect to database.
         :return: Datasource object.
         """
-        utils.validate_datasource_name(name)
-        if new_name is not None:
-            utils.validate_datasource_name(new_name)
-
         data = {}
         if new_name is not None:
             data['name'] = new_name
