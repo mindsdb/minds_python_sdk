@@ -2,7 +2,6 @@ from openai import OpenAI
 from typing import Dict, List, Optional, Union, Iterable, TYPE_CHECKING
 
 import minds.exceptions as exc
-import minds.utils as utils
 # from minds.knowledge_bases import KnowledgeBase, KnowledgeBaseConfig
 
 if TYPE_CHECKING:
@@ -228,8 +227,6 @@ class Minds:
         :param replace: if true - to remove existing mind, default is false
         :return: created mind
         """
-        utils.validate_mind_name(name)
-
         if replace:
             try:
                 self.get(name)
@@ -287,10 +284,6 @@ class Minds:
         :param parameters, dict: other parameters of the mind, optional
         :return: updated mind
         """
-        utils.validate_mind_name(name)
-        if new_name:
-            utils.validate_mind_name(new_name)
-
         data = {}
         if new_name:
             data['name'] = new_name
