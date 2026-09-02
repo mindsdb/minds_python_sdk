@@ -4,10 +4,10 @@ about = {}
 with open("minds/__about__.py") as fp:
     exec(fp.read(), about)
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open('requirements.txt') as req_file:
+with open("requirements.txt") as req_file:
     requirements = req_file.read().splitlines()
 
 setup(
