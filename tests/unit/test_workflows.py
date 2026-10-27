@@ -1,4 +1,5 @@
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -83,6 +84,55 @@ def test_publish_builds_the_commit_the_release_tests_ran_on():
     steps = _load('deploy.yml')['jobs']['deploy_to_pypi']['steps']
     checkout = next(step for step in steps if step.get('uses', '').startswith('actions/checkout@'))
     assert checkout.get('with', {}).get('ref') == '${{ github.event.workflow_run.head_sha }}'
+
+
+def _publish_steps():
+    return _load('deploy.yml')['jobs']['deploy_to_pypi']['steps']
+
+
+def _git(repo, *args):
+    return subprocess.run(['git', '-C', str(repo), *args], check=True, capture_output=True, text=True).stdout.strip()
+
+
+@pytest.fixture
+def history(tmp_path):
+    """A clone whose origin/main holds one commit, and a release commit that never merged."""
+    _git(tmp_path, 'init', '-q')
+    _git(tmp_path, '-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-q', '--allow-empty', '-m', 'main')
+    on_main = _git(tmp_path, 'rev-parse', 'HEAD')
+    _git(tmp_path, 'update-ref', 'refs/remotes/origin/main', on_main)
+    _git(tmp_path, '-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-q', '--allow-empty', '-m', 'branch')
+    return tmp_path, on_main, _git(tmp_path, 'rev-parse', 'HEAD')
+
+
+def _check_main_holds(repo, head_sha):
+    step = next(step for step in _publish_steps() if step.get('name') == 'Check that main holds the commit')
+    assert step['env'] == {'HEAD_SHA': '${{ github.event.workflow_run.head_sha }}'}
+    return subprocess.run(
+        ['bash', '-e', '-c', step['run']], cwd=repo, env={'HEAD_SHA': head_sha, 'PATH': '/usr/bin:/bin'},
+        capture_output=True, text=True,
+    )
+
+
+def test_publish_refuses_a_release_commit_that_main_does_not_hold(history):
+    """A writer can tag a branch commit, and that commit's test workflow can pass."""
+    repo, _, off_main = history
+    result = _check_main_holds(repo, off_main)
+    assert result.returncode == 1
+    assert f'::error::{off_main} is not on main' in result.stdout
+
+
+def test_publish_builds_a_release_commit_that_main_holds(history):
+    repo, on_main, _ = history
+    assert _check_main_holds(repo, on_main).returncode == 0
+
+
+def test_the_main_check_has_the_history_and_runs_before_the_upload():
+    steps = _publish_steps()
+    checkout = next(step for step in steps if step.get('uses', '').startswith('actions/checkout@'))
+    assert checkout['with']['fetch-depth'] == 0
+    names = [step.get('name') for step in steps]
+    assert names.index('Check that main holds the commit') < names.index('Build and publish')
 
 
 @pytest.mark.parametrize('name', RELEASE_WORKFLOWS)
