@@ -12,7 +12,7 @@ jobs:
     name: Publish to PyPI
     permissions:
       contents: read
-    runs-on: mdb-dev
+    runs-on: ubuntu-latest
     if: github.actor != 'mindsdbadmin'
     steps:
       - uses: actions/checkout@v4
